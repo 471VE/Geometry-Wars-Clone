@@ -6,6 +6,7 @@
 #include "Engine.h"
 #include <windows.h>
 #include <stdlib.h>
+#include <string>
 
 uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
 
@@ -16,185 +17,194 @@ static POINT cursor_pos;
 static bool quited = false;
 static LARGE_INTEGER qpc_frequency = { 0 };
 static LARGE_INTEGER qpc_ref_time = { 0 };
+float dt = 0;
 
 bool is_window_active()
 {
-  return is_active;
+return is_active;
 }
 
 void clear_buffer()
 {
-  memset(buffer, 0, sizeof(buffer));
+memset(buffer, 0, sizeof(buffer));
 }
 
 bool is_key_pressed(int button_vk_code)
 {
-  return is_active && (GetAsyncKeyState(button_vk_code) & 0x8000);
+return is_active && (GetAsyncKeyState(button_vk_code) & 0x8000);
 }
 
 bool is_mouse_button_pressed(int mouse_button_index)
 {
-  if (!is_active)
-    return false;
+if (!is_active)
+	return false;
 
-  if (mouse_button_index == 0)
-    return GetAsyncKeyState(VK_LBUTTON) != 0;
+if (mouse_button_index == 0)
+	return GetAsyncKeyState(VK_LBUTTON) != 0;
 
-  if (mouse_button_index == 1)
-    return GetAsyncKeyState(VK_RBUTTON) != 0;
+if (mouse_button_index == 1)
+	return GetAsyncKeyState(VK_RBUTTON) != 0;
 
-  return false;
+return false;
 }
 
 int get_cursor_x()
 {
-  return cursor_pos.x;
+return cursor_pos.x;
 }
 
 int get_cursor_y()
 {
-  return cursor_pos.y;
+return cursor_pos.y;
 }
 
 void schedule_quit_game()
 {
-  quited = true;
+quited = true;
 }
 
 static void CALLBACK update_proc(HWND hwnd)
-{
-  if (quited)
-    return;
+	{
+	if (quited)
+		return;
 
-  is_active = GetActiveWindow() == hwnd;
+	is_active = GetActiveWindow() == hwnd;
 
-  GetCursorPos(&cursor_pos);
-  ScreenToClient(hwnd, &cursor_pos);
+	GetCursorPos(&cursor_pos);
+	ScreenToClient(hwnd, &cursor_pos);
 
-  LARGE_INTEGER t;
-  QueryPerformanceCounter(&t);
+	LARGE_INTEGER t;
+	QueryPerformanceCounter(&t);
 
-  float dt = float((unsigned long)(t.QuadPart - qpc_ref_time.QuadPart)) / qpc_frequency.QuadPart;
-  if (dt > 0.1f)
-    dt = 0.1f;
+	dt = float((unsigned long)(t.QuadPart - qpc_ref_time.QuadPart)) / qpc_frequency.QuadPart;
+	if (dt > 0.1f)
+		dt = 0.1f;
 
-  act(dt);
+	act(dt);
 
-  if (!quited)
-  {
-    draw();
-    RedrawWindow(hwnd, NULL, 0, RDW_INVALIDATE | RDW_UPDATENOW);
-  }
+	if (!quited)
+	{
+		draw();
+		RedrawWindow(hwnd, NULL, 0, RDW_INVALIDATE | RDW_UPDATENOW);
+	}
 
-  qpc_ref_time = t;
+	qpc_ref_time = t;
 }
 
-static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-  switch (message)
-  {
-  case WM_PAINT:
-    {
-      PAINTSTRUCT ps;
-      HDC hdc = BeginPaint(hwnd, &ps);
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	// Add FPS counter
+    std::string fps = "FPS: " + std::to_string(int(1.f / dt));
+	LPSTR szMessage = const_cast<char *>(fps.c_str());
+	//
+	switch (message)
+	{
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hwnd, &ps);
 
-      BITMAPINFOHEADER bih;
-      bih.biSize = sizeof(bih);
-      bih.biWidth = SCREEN_WIDTH;
-      bih.biHeight = -SCREEN_HEIGHT;
-      bih.biPlanes = 1;
-      bih.biBitCount = 32;
-      bih.biCompression = BI_RGB;
-      bih.biSizeImage = 0;
-      bih.biXPelsPerMeter = 96;
-      bih.biYPelsPerMeter = 96;
-      bih.biClrUsed = 0;
-      bih.biClrImportant = 0;
-      SetDIBitsToDevice(
-        hdc,
-        0, 0,
-        SCREEN_WIDTH, SCREEN_HEIGHT,
-        0, 0,
-        0, SCREEN_HEIGHT,
-        buffer,
-        (BITMAPINFO*)&bih,
-        DIB_RGB_COLORS);
+			BITMAPINFOHEADER bih;
+			bih.biSize = sizeof(bih);
+			bih.biWidth = SCREEN_WIDTH;
+			bih.biHeight = -SCREEN_HEIGHT;
+			bih.biPlanes = 1;
+			bih.biBitCount = 32;
+			bih.biCompression = BI_RGB;
+			bih.biSizeImage = 0;
+			bih.biXPelsPerMeter = 96;
+			bih.biYPelsPerMeter = 96;
+			bih.biClrUsed = 0;
+			bih.biClrImportant = 0;
+			SetDIBitsToDevice(
+				hdc,
+				0, 0,
+				SCREEN_WIDTH, SCREEN_HEIGHT,
+				0, 0,
+				0, SCREEN_HEIGHT,
+				buffer,
+				(BITMAPINFO*)&bih,
+				DIB_RGB_COLORS);
+			// Displaying FPS
+			COLORREF newtextcolour = COLORREF RGB(0, 255, 0);
+			SetBkMode(hdc, TRANSPARENT);
+			SetTextColor(hdc, newtextcolour);
+			TextOut(hdc, 10, 10, szMessage, int(strlen(szMessage)));
+			//
+			EndPaint(hwnd, &ps);
+			}
+			break;
+		case WM_QUIT:
+		case WM_DESTROY:
+			quited = true;
+			break;
+		default:
+			return DefWindowProc(hwnd, message, wParam, lParam);
+	}
+	return 0;
+	}
 
-      EndPaint(hwnd, &ps);
-    }
-  break;
-  case WM_QUIT:
-  case WM_DESTROY:
-    quited = true;
-    break;
-  default:
-    return DefWindowProc(hwnd, message, wParam, lParam);
-  }
-  return 0;
-}
+	int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR    lpCmdLine,
+	_In_ int       nCmdShow)
+	{
+	SetProcessDPIAware();
+	hinst = hInstance;
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-  _In_opt_ HINSTANCE hPrevInstance,
-  _In_ LPWSTR    lpCmdLine,
-  _In_ int       nCmdShow)
-{
-  SetProcessDPIAware();
-  hinst = hInstance;
-  UNREFERENCED_PARAMETER(hPrevInstance);
-  UNREFERENCED_PARAMETER(lpCmdLine);
+	WNDCLASSEXA wcex;
 
-  WNDCLASSEXA wcex;
+	wcex.cbSize = sizeof(WNDCLASSEX);
 
-  wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = 0;
+	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+	wcex.lpszMenuName = 0;
+	wcex.lpszClassName = "GameWndClass";
+	wcex.hIconSm = 0;
+	RegisterClassExA(&wcex);
 
-  wcex.style = CS_HREDRAW | CS_VREDRAW;
-  wcex.lpfnWndProc = WndProc;
-  wcex.cbClsExtra = 0;
-  wcex.cbWndExtra = 0;
-  wcex.hInstance = hInstance;
-  wcex.hIcon = 0;
-  wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-  wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW);
-  wcex.lpszMenuName = 0;
-  wcex.lpszClassName = "GameWndClass";
-  wcex.hIconSm = 0;
-  RegisterClassExA(&wcex);
+	RECT rect;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = SCREEN_WIDTH;
+	rect.bottom = SCREEN_HEIGHT;
+	AdjustWindowRectEx(&rect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE, 0);
 
-  RECT rect;
-  rect.left = 0;
-  rect.top = 0;
-  rect.right = SCREEN_WIDTH;
-  rect.bottom = SCREEN_HEIGHT;
-  AdjustWindowRectEx(&rect, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE, 0);
+	HWND hwnd = CreateWindowA(wcex.lpszClassName, "Geometry Wars", WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,
+		CW_USEDEFAULT, 0, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
 
-  HWND hwnd = CreateWindowA(wcex.lpszClassName, "Geometry Wars", WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU,
-    CW_USEDEFAULT, 0, rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, hInstance, nullptr);
+	if (!hwnd)
+		return 0;
 
-  if (!hwnd)
-    return 0;
+	ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
 
-  ShowWindow(hwnd, nCmdShow);
-  UpdateWindow(hwnd);
+	QueryPerformanceFrequency(&qpc_frequency);
+	QueryPerformanceCounter(&qpc_ref_time);
 
-  QueryPerformanceFrequency(&qpc_frequency);
-  QueryPerformanceCounter(&qpc_ref_time);
+	ticks = GetTickCount();
+	initialize();
 
-  ticks = GetTickCount();
-  initialize();
+	MSG msg;
+	while (!quited)
+	{
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		}
+		update_proc(hwnd);
+		Sleep(0);
+	}
 
-  MSG msg;
-  while (!quited)
-  {
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-    }
-    update_proc(hwnd);
-    Sleep(0);
-  }
+	finalize();
 
-  finalize();
-
-  return (int)msg.wParam;
-}
+	return (int)msg.wParam;
+	}
