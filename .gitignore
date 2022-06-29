@@ -1,4 +1,6 @@
 build/
 Debug
 game.exe
+game.pdb
 .vscode
+assets/3.bmp

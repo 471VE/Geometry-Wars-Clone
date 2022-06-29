@@ -1,9 +1,5 @@
 #pragma once
 
-//
-//  DO NOT MODIFY THIS FILE
-//
-
 #include <stdint.h>
 
 #define SCREEN_WIDTH 1024
@@ -24,7 +20,14 @@ extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 #  define VK_A      0x41
 #  define VK_S      0x53
 #  define VK_D      0x44
+#  define VK_T      0x54
 #endif
+
+
+struct FPS {
+	bool on = false;
+	float button_press_time = 0.f;
+};
 
 // VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B' ...
 bool is_key_pressed(int button_vk_code);
@@ -42,7 +45,9 @@ void clear_buffer();
 void initialize();
 void finalize();
 
-void act(float dt);
+void act(float dt, FPS& fps);
 void draw();
 
 void schedule_quit_game();
+
+void log_error_and_exit(const char *message);

@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <string>
+#include <fstream>
 
 uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
 
@@ -17,54 +18,43 @@ static POINT cursor_pos;
 static bool quited = false;
 static LARGE_INTEGER qpc_frequency = { 0 };
 static LARGE_INTEGER qpc_ref_time = { 0 };
-float dt = 0;
+float dt = 0.f;
+FPS fps;
 
-bool is_window_active()
-{
-return is_active;
-}
+bool is_window_active() { return is_active; }
 
-void clear_buffer()
-{
-memset(buffer, 0, sizeof(buffer));
-}
+void clear_buffer() { memset(buffer, 0, sizeof(buffer)); }
 
 bool is_key_pressed(int button_vk_code)
-{
-return is_active && (GetAsyncKeyState(button_vk_code) & 0x8000);
-}
+	{ return is_active && (GetAsyncKeyState(button_vk_code) & 0x8000); }
 
-bool is_mouse_button_pressed(int mouse_button_index)
-{
-if (!is_active)
+bool is_mouse_button_pressed(int mouse_button_index) {
+	if (!is_active)
+		return false;
+
+	if (mouse_button_index == 0)
+		return GetAsyncKeyState(VK_LBUTTON) != 0;
+
+	if (mouse_button_index == 1)
+		return GetAsyncKeyState(VK_RBUTTON) != 0;
+
 	return false;
-
-if (mouse_button_index == 0)
-	return GetAsyncKeyState(VK_LBUTTON) != 0;
-
-if (mouse_button_index == 1)
-	return GetAsyncKeyState(VK_RBUTTON) != 0;
-
-return false;
 }
 
-int get_cursor_x()
-{
-return cursor_pos.x;
+int get_cursor_x() { return cursor_pos.x; }
+int get_cursor_y() { return cursor_pos.y; }
+
+void schedule_quit_game() { quited = true; }
+
+void log_error_and_exit(const char *message) {
+    std::ofstream log("error_log.txt");
+    log << message << std::endl;
+    log.close();
+    exit(EXIT_FAILURE);
 }
 
-int get_cursor_y()
-{
-return cursor_pos.y;
-}
 
-void schedule_quit_game()
-{
-quited = true;
-}
-
-static void CALLBACK update_proc(HWND hwnd)
-	{
+static void CALLBACK update_proc(HWND hwnd) {
 	if (quited)
 		return;
 
@@ -80,10 +70,9 @@ static void CALLBACK update_proc(HWND hwnd)
 	if (dt > 0.1f)
 		dt = 0.1f;
 
-	act(dt);
+	act(dt, fps);
 
-	if (!quited)
-	{
+	if (!quited) {
 		draw();
 		RedrawWindow(hwnd, NULL, 0, RDW_INVALIDATE | RDW_UPDATENOW);
 	}
@@ -93,8 +82,8 @@ static void CALLBACK update_proc(HWND hwnd)
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	// Add FPS counter
-    std::string fps = "FPS: " + std::to_string(int(1.f / dt));
-	LPSTR szMessage = const_cast<char *>(fps.c_str());
+    std::string fps_string = "FPS: " + std::to_string(int(1.f / dt));
+	LPSTR szMessage = const_cast<char *>(fps_string.c_str());
 	//
 	switch (message)
 	{
@@ -124,12 +113,16 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 				buffer,
 				(BITMAPINFO*)&bih,
 				DIB_RGB_COLORS);
+
 			// Displaying FPS
-			COLORREF newtextcolour = COLORREF RGB(0, 255, 0);
-			SetBkMode(hdc, TRANSPARENT);
-			SetTextColor(hdc, newtextcolour);
-			TextOut(hdc, 10, 10, szMessage, int(strlen(szMessage)));
+			if (fps.on) {
+				COLORREF newtextcolour = COLORREF RGB(0, 255, 0);
+				SetBkMode(hdc, TRANSPARENT);
+				SetTextColor(hdc, newtextcolour);
+				TextOut(hdc, 10, 10, szMessage, int(strlen(szMessage)));
+			}
 			//
+
 			EndPaint(hwnd, &ps);
 			}
 			break;
