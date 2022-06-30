@@ -16,16 +16,16 @@
 
 //Circle player = {{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}, 20};
 Sprite player("assets/3.bmp");
+Sprite arrow("assets/2.bmp");
 
 // initialize game data in this function
-void initialize()
-{
+void initialize() {
 }
+
 
 // this function is called to update game data,
 // dt - time elapsed since the previous update (in seconds)
-void act(float dt, FPS& fps)
-{
+void act(float dt, FPS& fps) {
 	if (is_key_pressed(VK_ESCAPE))
 		schedule_quit_game();
 	if (is_key_pressed(VK_T)) {
@@ -33,37 +33,44 @@ void act(float dt, FPS& fps)
 		fps.button_press_time += dt;
 	} else {
 		fps.button_press_time = 0.f;
-	}		
+	}
+
+	Point direction(0.f, 0.f);
 
 	if (is_key_pressed(VK_W))
-		player.moveUp(dt);
+		direction.y += 1.f;
 
 	if (is_key_pressed(VK_S))
-		player.moveDown(dt);
-
-	if (is_key_pressed(VK_A))
-		player.moveLeft(dt);
+		direction.y -= 1.f;
 
 	if (is_key_pressed(VK_D))
-		player.moveRight(dt);
+		direction.x += 1.f;
+
+	if (is_key_pressed(VK_A)) 
+		direction.x -= 1.f;
+
+	direction.normalize();
+	player.moveWithInertia(direction, dt);
+
+	arrow.rotateClockWise(dt);
 }
 
 // fill buffer in this function
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per A, R, G, B)
-void draw()
-{
+void draw() {
 	// clear backbuffer
 	memset(buffer, 0, SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
+
 	for (int y = 0; y < SCREEN_HEIGHT; ++y) {
 		for (int x = 0; x < SCREEN_WIDTH; ++x) {
 			buffer[y][x] = 0x000000000;
 		}
 	}
 	player.draw();
+	arrow.draw();
 
 }
 
 // free game data in this function
-void finalize()
-{
+void finalize() {
 }

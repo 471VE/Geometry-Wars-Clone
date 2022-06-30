@@ -6,7 +6,6 @@
 #include "Engine.h"
 #include <windows.h>
 #include <stdlib.h>
-#include <string>
 #include <fstream>
 
 uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
@@ -46,7 +45,7 @@ int get_cursor_y() { return cursor_pos.y; }
 
 void schedule_quit_game() { quited = true; }
 
-void log_error_and_exit(const char *message) {
+void log_error_and_exit(std::string message) {
     std::ofstream log("error_log.txt");
     log << message << std::endl;
     log.close();

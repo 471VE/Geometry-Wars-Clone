@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
@@ -50,4 +51,4 @@ void draw();
 
 void schedule_quit_game();
 
-void log_error_and_exit(const char *message);
+void log_error_and_exit(std::string message);

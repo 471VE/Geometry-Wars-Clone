@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #pragma pack(push, 1)
+
 struct BMPFileHeader {
     uint16_t file_type{ 0x4D42 };          // (stored as hex uint16_t in little endian)
     uint32_t file_size{ 0 };
@@ -33,4 +34,5 @@ struct BMPColorHeader {
     uint32_t color_space_type{ 0x73524742 }; // Default "sRGB" (0x73524742)
     uint32_t unused[16]{ 0 };
 };
+
 #pragma pack(pop)

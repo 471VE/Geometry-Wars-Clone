@@ -1,10 +1,43 @@
 #pragma once
 
+#include <cmath>
 #include "Engine.h"
 
 
 struct Point {
     float x, y;
+
+    float getAngle() {
+        return std::atan2(y, x);
+    }
+
+    void normalize() {
+        float length = x * x + y * y;
+        if (length > 0.f) {
+            float sqrt_length = std::sqrt(length);
+            x /= sqrt_length;
+            y /= sqrt_length;
+        }
+    }
+    
+
+    Point& operator=(const Point& point) {
+        if (this != &point) {
+            x = point.x;
+            y = point.y;
+        }
+        return *this;
+    }
+
+    Point(float angle)
+        : x(std::cos(angle))
+        , y(std::sin(angle))
+    {}
+
+    Point(float x, float y)
+        : x(x)
+        , y(y)
+    {}
 };
 
 
