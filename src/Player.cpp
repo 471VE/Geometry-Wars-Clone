@@ -19,6 +19,30 @@ Point PlayerSprite::getMovementDirection() {
     return direction;
 }
 
+void PlayerSprite::getToAngle(float angle, float dt, float difference, float angular_velocity) {
+    if (difference > m_angle_threshold) {
+        m_angle += angular_velocity * dt;
+        rotate(m_angle);
+    } else if (difference < -m_angle_threshold) {
+        m_angle -= angular_velocity * dt;
+        rotate(m_angle);
+    } else {
+        m_angle = angle;
+        rotate(m_angle);
+    }
+}
+
+void PlayerSprite::getToAngleUniform(float angle, float dt) {
+    float difference = getAngleDifference(angle);
+    getToAngle(angle, dt, difference, m_angular_velocity);
+}
+
+void PlayerSprite::getToAngleNonUniform(float angle, float dt, float time) {
+    float difference = getAngleDifference(angle);
+    float angular_velocity =  2 * std::abs(difference / time);
+    getToAngle(angle, dt, difference, angular_velocity);
+}
+
 void PlayerSprite::moveWithInertiaAndRotation(float dt) {
     Point expected_direction = getMovementDirection();
     float angle;
@@ -59,8 +83,8 @@ void PlayerSprite::moveWithInertiaAndRotation(float dt) {
 void PlayerArrow::rotateToMouseDirection() {
     float x = float(get_cursor_x());
     float y = float(get_cursor_y());
-    Point direction(x - m_centerX, y - m_centerY);
-    rotate(direction.getAngle() + M_PI_2);
+    m_direction = Point(x - m_centerX, y - m_centerY);
+    rotate(m_direction.getAngle() + M_PI_2);
 }
 
 void PlayerArrow::setCenter(float x, float y) {

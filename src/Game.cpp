@@ -5,7 +5,7 @@
 
 #include "Primitives.h"
 #include "Player.h"
-#include "Sprite.h"
+#include "Bullet.h"
 
 //  is_key_pressed(int button_vk_code) - check if a key is pressed,
 //                                       use keycodes (VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B')
@@ -20,7 +20,10 @@
 
 
 Player player;
-Sprite arrow("assets/sprites/red_arrow.bmp");
+GameObject arrow("assets/sprites/red_arrow.bmp");
+
+BulletSet bullet_set;
+
 
 // initialize game data in this function
 void initialize() {
@@ -42,15 +45,16 @@ void act(float dt, FPS& fps) {
 		fps.button_press_time += dt;
 	} else {
 		fps.button_press_time = 0.f;
-	}	
+	}
 
-	if (is_key_pressed(VK_SPACE)) {
+	if (is_key_pressed(VK_DOWN)) {
 		mciSendString("PLAY sample from 0 repeat","",0,0);
 	}
 		//mciSendString("close MP3","",0,0);
 
 	player.update(dt);
 	arrow.rotateClockWise(dt);
+	bullet_set.update(dt, player.getCenter());
 
 	messages_to_render.clear();
 	if (fps.on)
@@ -65,6 +69,7 @@ void draw() {
 	clear_buffer();
 	player.draw();
 	arrow.draw();
+	bullet_set.draw();
 }
 
 // free game data in this function

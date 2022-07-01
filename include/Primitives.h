@@ -12,11 +12,11 @@ struct Point {
     }
 
     void normalize() {
-        float length = x * x + y * y;
-        if (length > 0.f) {
-            float sqrt_length = std::sqrt(length);
-            x /= sqrt_length;
-            y /= sqrt_length;
+        float squared_length = x * x + y * y;
+        if (squared_length > 0.f) {
+            float length = std::sqrt(squared_length);
+            x /= length;
+            y /= length;
         }
     }
     
