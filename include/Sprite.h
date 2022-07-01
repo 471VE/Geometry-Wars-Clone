@@ -12,7 +12,8 @@ void check_angle(float& angle);
 
 class Sprite {
     public:
-        Sprite(const char *fname);
+        Sprite(const char *fname,   float centerX = float(SCREEN_WIDTH) / 2.f, float centerY = float(SCREEN_HEIGHT) / 2.f,
+            float angular_velocity = 2 * M_PI, float velocity = 200.f);
 
         inline int getHeight() const { return m_height; }
         inline int getWidth() const { return m_width; }
@@ -39,7 +40,6 @@ class Sprite {
         void draw();
 
         void move(Point expected_direction, float dt);
-        void moveWithInertia(Point expected_direction, float dt);
 
         void rotateClockWise(float dt) {
             m_angle += m_angular_velocity * dt;
@@ -70,10 +70,10 @@ class Sprite {
 
         float m_centerX;
         float m_centerY;
-        float m_velocity = 200.f;
+        float m_velocity;
 
         float m_angle = 0;
-        float m_angular_velocity = 2 * M_PI;
+        float m_angular_velocity;
         float m_angle_threshold = M_PI/90;
 
         float m_last_velocity = m_velocity;

@@ -4,11 +4,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include "Engine.h"
-#include <windows.h>
 #include <stdlib.h>
+#include <windows.h>
 #include <fstream>
 
 uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
+std::vector<MessageToRender> messages_to_render;
 
 static HINSTANCE hinst = 0;
 static DWORD ticks = 0;
@@ -52,6 +53,26 @@ void log_error_and_exit(std::string message) {
     exit(EXIT_FAILURE);
 }
 
+LPCSTR szFontFileArcade = "assets/fonts/arcade.ttf";
+int nResultsArcade = AddFontResourceEx(szFontFileArcade, FR_PRIVATE, NULL);
+
+LPCSTR szFontFileOutrun = "assets/fonts/outrun.ttf";
+int nResultsOutrun = AddFontResourceEx(szFontFileOutrun, FR_PRIVATE, NULL);
+
+void render_messages(HDC hdc) {
+    for (const auto& message: messages_to_render) {
+		HFONT hFont = CreateFont(message.size, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT(const_cast<char*>(message.font.c_str())));
+        HFONT hOldFont = (HFONT) SelectObject(hdc, hFont);
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, COLORREF RGB(message.color_r, message.color_g, message.color_b));
+
+        LPSTR lpstr_message = const_cast<char*>(message.message.c_str());
+        TextOut(hdc, message.x, message.y, lpstr_message, int(strlen(lpstr_message)));
+
+        SelectObject(hdc, hOldFont);
+		DeleteObject(hFont);
+    }
+}
 
 static void CALLBACK update_proc(HWND hwnd) {
 	if (quited)
@@ -80,10 +101,6 @@ static void CALLBACK update_proc(HWND hwnd) {
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	// Add FPS counter
-    std::string fps_string = "FPS: " + std::to_string(int(1.f / dt));
-	LPSTR szMessage = const_cast<char *>(fps_string.c_str());
-	//
 	switch (message)
 	{
 		case WM_PAINT:
@@ -113,15 +130,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 				(BITMAPINFO*)&bih,
 				DIB_RGB_COLORS);
 
-			// Displaying FPS
-			if (fps.on) {
-				COLORREF newtextcolour = COLORREF RGB(0, 255, 0);
-				SetBkMode(hdc, TRANSPARENT);
-				SetTextColor(hdc, newtextcolour);
-				TextOut(hdc, 10, 10, szMessage, int(strlen(szMessage)));
-			}
-			//
-
+			render_messages(hdc);
 			EndPaint(hwnd, &ps);
 			}
 			break;
@@ -135,7 +144,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 	return 0;
 	}
 
-	int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPWSTR    lpCmdLine,
 	_In_ int       nCmdShow)
@@ -197,6 +206,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 	}
 
 	finalize();
+
+	RemoveFontResourceEx(szFontFileArcade, FR_PRIVATE, NULL);
+	RemoveFontResourceEx(szFontFileOutrun, FR_PRIVATE, NULL);
 
 	return (int)msg.wParam;
 	}

@@ -3,4 +3,5 @@ Debug
 game.exe
 game.pdb
 .vscode
-assets/3.bmp
+assets/sprites_raw
+error_log.txt

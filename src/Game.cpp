@@ -1,8 +1,10 @@
 #include "Engine.h"
 #include <stdlib.h>
 #include <memory.h>
+#include <windows.h>
 
 #include "Primitives.h"
+#include "Player.h"
 #include "Sprite.h"
 
 //  is_key_pressed(int button_vk_code) - check if a key is pressed,
@@ -15,13 +17,20 @@
 //  schedule_quit_game() - quit game after act()
 
 //Circle player = {{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}, 20};
-Sprite player("assets/3.bmp");
-Sprite arrow("assets/2.bmp");
+
+
+Player player;
+Sprite arrow("assets/sprites/red_arrow.bmp");
 
 // initialize game data in this function
 void initialize() {
+	mciSendString("OPEN assets/music/test.mp3 ALIAS sample",0,0,0);
+	mciSendString("PLAY sample repeat",0,0,0);
 }
 
+void fade_audio() {
+
+}
 
 // this function is called to update game data,
 // dt - time elapsed since the previous update (in seconds)
@@ -33,42 +42,29 @@ void act(float dt, FPS& fps) {
 		fps.button_press_time += dt;
 	} else {
 		fps.button_press_time = 0.f;
+	}	
+
+	if (is_key_pressed(VK_SPACE)) {
+		mciSendString("PLAY sample from 0 repeat","",0,0);
 	}
+		//mciSendString("close MP3","",0,0);
 
-	Point direction(0.f, 0.f);
-
-	if (is_key_pressed(VK_W))
-		direction.y += 1.f;
-
-	if (is_key_pressed(VK_S))
-		direction.y -= 1.f;
-
-	if (is_key_pressed(VK_D))
-		direction.x += 1.f;
-
-	if (is_key_pressed(VK_A)) 
-		direction.x -= 1.f;
-
-	direction.normalize();
-	player.moveWithInertia(direction, dt);
-
+	player.update(dt);
 	arrow.rotateClockWise(dt);
+
+	messages_to_render.clear();
+	if (fps.on)
+		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 10, 10));
+	messages_to_render.push_back(MessageToRender("outrun future", "Sasai", 100, 100, 100, 255, 0, 0));
 }
 
 // fill buffer in this function
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per A, R, G, B)
 void draw() {
 	// clear backbuffer
-	memset(buffer, 0, SCREEN_HEIGHT * SCREEN_WIDTH * sizeof(uint32_t));
-
-	for (int y = 0; y < SCREEN_HEIGHT; ++y) {
-		for (int x = 0; x < SCREEN_WIDTH; ++x) {
-			buffer[y][x] = 0x000000000;
-		}
-	}
+	clear_buffer();
 	player.draw();
 	arrow.draw();
-
 }
 
 // free game data in this function

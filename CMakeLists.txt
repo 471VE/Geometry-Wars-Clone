@@ -28,4 +28,5 @@ add_executable(game WIN32 ${src_files})
 
 target_link_libraries(game
     ${PROJECT_NAME}
+    "Winmm.lib"
 )

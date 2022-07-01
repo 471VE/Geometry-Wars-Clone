@@ -1,1 +1,1 @@
-3.926991
+For purposes of this game images must contain alpha channel.

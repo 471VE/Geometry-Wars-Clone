@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
@@ -23,7 +24,6 @@ extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 #  define VK_D      0x44
 #  define VK_T      0x54
 #endif
-
 
 struct FPS {
 	bool on = false;
@@ -52,3 +52,24 @@ void draw();
 void schedule_quit_game();
 
 void log_error_and_exit(std::string message);
+
+struct MessageToRender {
+    MessageToRender(std::string font, std::string message, int x, int y, int size = 20,
+		uint8_t color_r = 0, uint8_t color_g = 255, uint8_t color_b = 0)
+        : font(font)
+        , message(message)
+        , x(x)
+        , y(y)
+		, size(size)
+		, color_r(color_r)
+		, color_g(color_g)
+		, color_b(color_b)
+    {}
+
+	std::string font;
+	std::string message;
+	int x, y, size;
+	uint8_t color_r, color_g, color_b;
+};
+
+extern std::vector<MessageToRender> messages_to_render;

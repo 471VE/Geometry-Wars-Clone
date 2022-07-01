@@ -29,7 +29,7 @@ void check_color_header(BMPColorHeader &bmp_color_header) {
 
 
 // Load sprite from .bmp
-Sprite::Sprite(const char *fname) {
+Sprite::Sprite(const char *fname, float centerX, float centerY, float angular_velocity, float velocity) {
     std::ifstream input_file{ fname, std::ios_base::binary };
     if (!input_file)
         log_error_and_exit("Unable to open the input image file.");
@@ -75,12 +75,15 @@ Sprite::Sprite(const char *fname) {
         m_width = bmp_info_header.width;
     }
     m_channels = 4;
-    m_centerX = float(SCREEN_WIDTH) / 2.f;
-    m_centerY = float(SCREEN_HEIGHT) / 2.f;
+    m_centerX = centerX;
+    m_centerY = centerY;
 
     m_data_render = m_data;
     m_height_render = m_height;
     m_width_render = m_width;
+
+    m_velocity = velocity;
+    m_angular_velocity = angular_velocity;
 }
 
 struct WeightedPoint {
@@ -249,27 +252,6 @@ void Sprite::getToAngleNonUniform(float angle, float dt, float time) {
     float difference = getAngleDifference(angle);
     float angular_velocity =  2 * std::abs(difference / time);
     getToAngle(angle, dt, difference, angular_velocity);
-}
-
-void Sprite::moveWithInertia(Point expected_direction, float dt) {
-    float angle;
-    if ((expected_direction.x == 0.f) && (expected_direction.y == 0.f))
-        angle = getAngle();
-    else 
-        angle = -expected_direction.getAngle() + M_PI_2;
-    getToAngleNonUniform(angle, dt);
-    Point direction(-m_angle + M_PI_2);
-    float velocity;
-    if ((expected_direction.x == 0.f) && (expected_direction.y == 0.f)) {
-        m_last_velocity /= (dt * (1 / dt + 2));
-        velocity = m_last_velocity;
-    } else {
-        m_last_velocity_direction = direction;
-        m_last_velocity = m_velocity;
-        velocity = m_velocity;
-    }
-    m_centerY -= m_last_velocity_direction.y * velocity * dt;
-    m_centerX += m_last_velocity_direction.x * velocity * dt;
 }
 
 void Sprite::move(Point expected_direction, float dt) {
