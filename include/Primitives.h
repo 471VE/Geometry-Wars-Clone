@@ -38,6 +38,11 @@ struct Point {
         : x(x)
         , y(y)
     {}
+
+    Point()
+        : x(0)
+        , y(0)
+    {}
 };
 
 

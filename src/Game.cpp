@@ -22,7 +22,7 @@
 
 Player player;
 BulletSet bullet_set;
-EnemySet enemy_set;
+EnemySet enemy_set(2.f, 0.99f);
 
 
 
@@ -56,8 +56,8 @@ void act(float dt, FPS& fps) {
 	player.update(dt);
 	Point player_position = player.getCenter();
 
-	enemy_set.update(player_position, dt);
 	bullet_set.update(player_position, dt);
+	enemy_set.update(player_position, dt, bullet_set);
 
 	messages_to_render.clear();
 	if (fps.on)
@@ -78,5 +78,6 @@ void draw() {
 // free game data in this function
 void finalize() {
 	mciSendString("close shot",0,0,0);
+	mciSendString("close explosion",0,0,0);
 	mciSendString("close sample",0,0,0);
 }

@@ -3,6 +3,12 @@
 
 #include "Enemy.h"
 
+float get_sign(float x) {
+    if (x >= 0)
+        return 1.f;
+    return -1.f;
+}
+
 std::mt19937 generator;
 
 float Enemy::getRandom(float a, float b) {
@@ -80,10 +86,31 @@ void Enemy::resize(float scaleX, float scaleY) {
     }
 }
 
+void Enemy::checkBoundaries(Point& direction) {
+    if (m_centerX < float(m_width) / 2.f) {
+        direction.x *= -1;
+        m_centerX = float(m_width) / 2.f;
+    }
+    else if (m_centerX > float(SCREEN_WIDTH - m_width / 2)) {
+        direction.x *= -1;
+        m_centerX = float(SCREEN_WIDTH - m_width / 2);
+    }
 
-EnemyTypeOne::EnemyTypeOne(const char* fname, float velocity,  float angular_velocity)
+    if (m_centerY < float(m_height) / 2.f) {
+        direction.y *= -1;
+        m_centerY = float(m_height) / 2.f;
+    } 
+    else if (m_centerY > float(SCREEN_HEIGHT - m_height / 2)) {
+        direction.y *= -1;
+        m_centerY = float(SCREEN_HEIGHT - m_height / 2);
+    }
+}
+
+
+EnemyTypeOne::EnemyTypeOne(const char* fname, float velocity,  float angular_velocity, float rotational_velocity)
     : Enemy(fname, velocity, angular_velocity)
     , m_direction(Point(getRandom(-1.f, 1.f), getRandom(-1.f, 1.f)))
+    , m_rotational_velocity(rotational_velocity)
 {
     m_direction.normalize();
 }
@@ -91,35 +118,18 @@ EnemyTypeOne::EnemyTypeOne(const char* fname, float velocity,  float angular_vel
 EnemyTypeOne::EnemyTypeOne(const EnemyTypeOne& enemy)
     : Enemy(enemy)
     , m_direction(Point(getRandom(-1.f, 1.f), getRandom(-1.f, 1.f)))
+    , m_rotational_velocity(enemy.m_rotational_velocity)
 {
     m_direction.normalize();
 }
 
 void EnemyTypeOne::update(const Point& point, float dt) {
-    checkBoundaries();
     rotateCounterClockWise(dt);
+    float angle = m_direction.getAngle();
+    float new_angle = angle + m_rotational_velocity * dt;
+    m_direction = Point(new_angle);
     move(m_direction, dt);
-}
-
-void EnemyTypeOne::checkBoundaries() {
-    if (m_centerX < float(m_width) / 2.f) {
-        m_direction.x *= -1;
-        m_centerX = float(m_width) / 2.f;
-    }
-    else if (m_centerX > float(SCREEN_WIDTH - m_width / 2)) {
-        m_direction.x *= -1;
-        m_centerX = float(SCREEN_WIDTH - m_width / 2);
-    }
-
-    if (m_centerY < float(m_height) / 2.f) {
-        m_direction.y *= -1;
-        m_centerY = float(m_height) / 2.f;
-    } 
-    else if (m_centerY > float(SCREEN_HEIGHT - m_height / 2)) {
-        m_direction.y *= -1;
-        m_centerY = float(SCREEN_HEIGHT - m_height / 2);
-    }
-
+    checkBoundaries(m_direction);
 }
 
 EnemyTypeTwo::EnemyTypeTwo(const char* fname, float velocity, float angular_velocity)
@@ -140,8 +150,8 @@ EnemyTypeTwo::EnemyTypeTwo(const EnemyTypeTwo& enemy)
 
 
 void EnemyTypeTwo::shapeShift() {
-    m_current_scaleX = 1.f + 0.1f * std::sin(m_omega * m_lifetime);
-    m_current_scaleY = 1.f - 0.1f * std::sin(m_omega * m_lifetime);
+    m_current_scaleX = 1.f + 0.2f * std::sin(m_omega * m_lifetime);
+    m_current_scaleY = 1.f - 0.2f * std::sin(m_omega * m_lifetime);
     resize(m_current_scaleX, m_current_scaleY);
 }
 
@@ -157,23 +167,111 @@ void EnemyTypeTwo::update(const Point& point, float dt) {
     shapeShift();
 }
 
-
-EnemySet::EnemySet()
-    : original_enemy1(EnemyTypeOne("assets/sprites/enemy1.bmp"))
-    , original_enemy2(EnemyTypeTwo("assets/sprites/enemy2.bmp"))
-    , time_elapsed_since_last_enemy(0)
-    , time_between_enemies(2.f)
+EnemyTypeThree::EnemyTypeThree(const char* fname, float min_velocity, float max_velocity,
+    float min_angular_velocity, float max_angular_velocity, float angle_threshold)
+    : Enemy(fname, min_velocity, min_angular_velocity)
+    , m_min_velocity(min_velocity)
+    , m_max_velocity(max_velocity)
+    , m_min_angular_velocity(min_angular_velocity)
+    , m_max_angular_velocity(max_angular_velocity)
+    , m_angle_threshold(angle_threshold)
 {}
 
-void EnemySet::update(const Point& player_center, float dt) {
+EnemyTypeThree::EnemyTypeThree(const EnemyTypeThree& enemy)
+    : Enemy(enemy)
+    , m_min_velocity(enemy.m_min_velocity)
+    , m_max_velocity(enemy.m_max_velocity)
+    , m_min_angular_velocity(enemy.m_min_angular_velocity)
+    , m_max_angular_velocity(enemy.m_max_angular_velocity)
+    , m_angle_threshold(enemy.m_angle_threshold)
+{}
+
+void EnemyTypeThree::update_velocity(float&v, const float& min_v, const float& max_v, const float& angle) {
+    if (angle < 2 * m_angle_threshold) {
+        float scaled_angle = angle / (2 * m_angle_threshold);
+        v = (max_v - min_v) * std::sqrt(1 - scaled_angle * scaled_angle) + min_v;
+    } else
+        v = min_v;
+}
+
+void EnemyTypeThree::update(const Point& point, float dt) {
+    float arrow_direction_angle = std::atan2(get_cursor_y() - point.y, get_cursor_x() - point.x);
+    float enemy_direction_angle = std::atan2(m_centerY - point.y, m_centerX - point.x);
+    Point enemy_direction(m_centerX - point.x, m_centerY - point.y);
+
+    float angle = enemy_direction_angle - arrow_direction_angle;
+    check_angle(angle);
+
+    float angle_sign = get_sign(angle);
+    angle = std::abs(angle);
+
+    update_velocity(m_angular_velocity, m_min_angular_velocity, m_max_angular_velocity, angle);
+    update_velocity(m_velocity, m_min_velocity, m_max_velocity, angle);
+
+    Point direction;
+    if (angle < m_angle_threshold) {
+        direction.x = - enemy_direction.y * angle_sign;
+        direction.y = enemy_direction.x * angle_sign;
+    } else {
+        direction = Point(point.x - m_centerX, point.y - m_centerY);
+    }
+
+    direction.normalize();
+    if (m_last_direction.x == 0.f && m_last_direction.y == 0.f) {
+        m_last_direction = direction;
+    }
+    direction.x = direction.x * 5 * dt + m_last_direction.x * (1 - 5 * dt);
+    direction.y = direction.y * 5 * dt + m_last_direction.y * (1 - 5 * dt);
+
+    direction.normalize();
+    checkBoundaries(direction);
+    move(direction, dt);  
+
+    m_last_direction = direction;          
+    rotateCounterClockWise(dt * angle_sign);
+}
+
+EnemySet::EnemySet(float time_between_enemies, float speedup_coefficient)
+    : original_enemy1(EnemyTypeOne("assets/sprites/enemy1.bmp"))
+    , original_enemy2(EnemyTypeTwo("assets/sprites/enemy2.bmp"))
+    , original_enemy3(EnemyTypeThree("assets/sprites/enemy3.bmp"))
+    , time_elapsed_since_last_enemy(0)
+    , time_between_enemies(time_between_enemies)
+    , speedup_coefficient(speedup_coefficient)
+    , enemies_created(0)
+{
+    mciSendString("OPEN assets/SFX/explosion.wav ALIAS explosion",0,0,0);
+}
+
+void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_set) {
     time_elapsed_since_last_enemy += dt;
     if (time_elapsed_since_last_enemy > time_between_enemies) {
         time_elapsed_since_last_enemy = 0;
-        time_between_enemies *= 0.9f;
+        time_between_enemies *= 0.99f;
 
-        Enemy* enemy =  new EnemyTypeTwo(original_enemy2);
+        Enemy* enemy = chooseEnemy();
         enemies.insert(enemy);
     }
+
+    for (auto enemy = enemies.begin(); enemy != enemies.end();) {
+        bool enemy_killed = false;
+        for (auto bullet = bullet_set.bullets.begin(); bullet != bullet_set.bullets.end();) {
+            if ((*bullet)->hits(*(*enemy))) {
+                delete (*bullet);
+                bullet_set.bullets.erase(bullet++);
+
+                delete (*enemy);
+                enemies.erase(enemy++);
+                enemy_killed = true;
+                mciSendString("PLAY explosion from 0",0,0,0);
+                break;
+            }
+            else
+                ++bullet;
+        }
+        if (!enemy_killed)
+            ++enemy;
+    }  
 
     for (auto enemy = enemies.begin(); enemy != enemies.end();) {
         (*enemy)->update(player_center, dt);
@@ -184,4 +282,26 @@ void EnemySet::update(const Point& player_center, float dt) {
 void EnemySet::draw() {
     for (auto enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
         (*enemy)->draw();
+}
+
+Enemy* EnemySet::chooseEnemy() {
+    int enemy_type;
+    if (enemies_created < 3) {
+        enemy_type = enemies_created + 1;
+    } else {
+        std::uniform_int_distribution<int> uniform(1, 3);
+        enemy_type = uniform(generator);
+    }
+    enemies_created++;
+    switch(enemy_type) {
+        case 1:
+            return new EnemyTypeOne(original_enemy1);
+        case 2:
+            return new EnemyTypeTwo(original_enemy2);
+        case 3:
+            return new EnemyTypeThree(original_enemy3);
+        default:
+            log_error_and_exit("Something went wrong when creating new enemy.");
+            return 0;
+    }
 }

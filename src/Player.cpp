@@ -39,7 +39,7 @@ void PlayerSprite::getToAngleUniform(float angle, float dt) {
 
 void PlayerSprite::getToAngleNonUniform(float angle, float dt, float time) {
     float difference = getAngleDifference(angle);
-    float angular_velocity =  2 * std::abs(difference / time);
+    float angular_velocity =  4 * std::abs(difference / time);
     getToAngle(angle, dt, difference, angular_velocity);
 }
 
@@ -54,7 +54,7 @@ void PlayerSprite::moveWithInertiaAndRotation(float dt) {
     Point direction(m_angle);
     float velocity;
     if ((expected_direction.x == 0.f) && (expected_direction.y == 0.f)) {
-        m_last_velocity /= (dt * (1 / dt + 2));
+        m_last_velocity /= (dt * (1 / dt + 3));
         velocity = m_last_velocity;
     } else {
         m_last_velocity_direction = direction;

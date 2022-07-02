@@ -35,7 +35,7 @@ class PlayerArrow: public GameObject {
 
 class Player {
     public:
-        Player(float angular_velocity = 1, float velocity = 200.f)
+        Player(float angular_velocity = 0.1f, float velocity = 300.f)
             : player_sprite(PlayerSprite("assets/sprites/player_main.bmp", angular_velocity, velocity))
             , player_arrow(PlayerArrow("assets/sprites/player_arrow.bmp"))
         {}

@@ -25,7 +25,7 @@ GameObject::GameObject(const char *fname, float centerX, float centerY, float an
     m_data_render = m_data;
     m_height_render = m_height;
     m_width_render = m_width;
-    m_hitbox_radius = float(m_height / 2);
+    m_hitbox_radius = float(m_height / 2) * 0.7f;
 }
 
 GameObject::GameObject(const GameObject& object)
@@ -198,6 +198,11 @@ void GameObject::checkAngle() {
 
 bool GameObject::hits(const GameObject& object) {
     float deltaX = object.m_centerX - m_centerX;
-    float deltaY = object.m_centerX - m_centerX;
+    float deltaY = object.m_centerY - m_centerY;
+    bool tmp = (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
+    if (tmp) {
+        float angle =0;
+        return (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
+    }
     return (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
 }
