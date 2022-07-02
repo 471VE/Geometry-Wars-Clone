@@ -25,6 +25,7 @@ GameObject::GameObject(const char *fname, float centerX, float centerY, float an
     m_data_render = m_data;
     m_height_render = m_height;
     m_width_render = m_width;
+    m_hitbox_radius = float(m_height / 2);
 }
 
 GameObject::GameObject(const GameObject& object)
@@ -36,6 +37,7 @@ GameObject::GameObject(const GameObject& object)
     , m_data_render(object.m_data)
     , m_height_render(object.m_height)
     , m_width_render(object.m_width)
+    , m_hitbox_radius(object.m_hitbox_radius)
 {}
 
 
@@ -183,7 +185,7 @@ void GameObject::draw() {
 }
 
 void GameObject::move(Point expected_direction, float dt) {
-    m_centerY -= expected_direction.y * m_velocity * dt;
+    m_centerY += expected_direction.y * m_velocity * dt;
     m_centerX += expected_direction.x * m_velocity * dt;
 }
 
@@ -192,4 +194,10 @@ void GameObject::checkAngle() {
         m_angle -= 2 * M_PI;
     if (m_angle <= -M_PI)
         m_angle += 2 * M_PI;
+}
+
+bool GameObject::hits(const GameObject& object) {
+    float deltaX = object.m_centerX - m_centerX;
+    float deltaY = object.m_centerX - m_centerX;
+    return (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
 }

@@ -25,6 +25,10 @@ extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 #  define VK_T      0x54
 #endif
 
+#define M_PI 3.141592741f
+#define M_PI_2 1.570796371f
+#define M_PI_4 0.7853981853f
+
 struct FPS {
 	bool on = false;
 	float button_press_time = 0.f;

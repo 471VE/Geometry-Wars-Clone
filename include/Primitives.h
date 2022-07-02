@@ -8,7 +8,7 @@ struct Point {
     float x, y;
 
     float getAngle() {
-        return std::atan2(y, x);
+        return std::atan2(y, x) + M_PI_2;
     }
 
     void normalize() {
@@ -30,8 +30,8 @@ struct Point {
     }
 
     Point(float angle)
-        : x(std::cos(angle))
-        , y(std::sin(angle))
+        : x(std::cos(angle - M_PI_2))
+        , y(std::sin(angle - M_PI_2))
     {}
 
     Point(float x, float y)

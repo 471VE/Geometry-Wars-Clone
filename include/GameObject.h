@@ -5,11 +5,6 @@
 #include "Sprite.h"
 #include "Primitives.h"
 
-
-#define M_PI 3.141592741f
-#define M_PI_2 1.570796371f
-#define M_PI_4 0.7853981853f
-
 void check_angle(float& angle);
 
 class GameObject: public Sprite {
@@ -47,6 +42,8 @@ class GameObject: public Sprite {
             rotate(m_angle);
         }
 
+        bool hits(const GameObject& object);
+
     protected:
         int m_height_render;
         int m_width_render;
@@ -55,6 +52,8 @@ class GameObject: public Sprite {
         float m_centerX;
         float m_centerY;
         float m_velocity;
+
+        float m_hitbox_radius;
 
         float m_angle = 0;
         float m_angular_velocity;

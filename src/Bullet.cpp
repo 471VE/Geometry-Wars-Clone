@@ -9,12 +9,26 @@ Bullet::Bullet(const Bullet& bullet, Point center)
     m_centerY = center.y;
     m_direction = Point(float(get_cursor_x()) - m_centerX, float(get_cursor_y()) - m_centerY);
     m_direction.normalize();
-    rotate(m_direction.getAngle() + M_PI_2);
+    rotate(m_direction.getAngle());
 }
 
 void Bullet::move(float dt) {
     m_centerY += m_direction.y * m_velocity * dt;
     m_centerX += m_direction.x * m_velocity * dt;
+}
+
+void Bullet::initialMove() {
+    m_centerY += m_direction.y * 25;
+    m_centerX += m_direction.x * 25;
+}
+
+bool Bullet::outsideScreen() {
+    return (
+        m_centerX < -float(m_width) / 2.f ||
+        m_centerX > SCREEN_WIDTH + float(m_width) / 2.f ||
+        m_centerY < -float(m_height) / 2.f ||
+        m_centerY > SCREEN_HEIGHT + float(m_height) / 2.f
+    );
 }
 
 BulletSet::BulletSet()
@@ -24,12 +38,13 @@ BulletSet::BulletSet()
     mciSendString("OPEN assets/SFX/shot.mp3 ALIAS shot",0,0,0);
 }
 
-void BulletSet::update(float dt, Point player_center) {
+void BulletSet::update(const Point& player_center, float dt) {
     time_elapsed_since_last_bullet += dt;
     if (is_key_pressed(VK_SPACE) || is_mouse_button_pressed(0)) {
-        if (time_elapsed_since_last_bullet > 0.2) {
+        if (time_elapsed_since_last_bullet > 0.15) {
             time_elapsed_since_last_bullet = 0;
             Bullet* bullet =  new Bullet(original_bullet, player_center);
+            bullet->initialMove();
             bullets.insert(bullet);
             mciSendString("PLAY shot from 0",0,0,0);
         }
@@ -37,11 +52,7 @@ void BulletSet::update(float dt, Point player_center) {
 
     for (auto bullet = bullets.begin(); bullet != bullets.end();) {
         (*bullet)->move(dt);
-        if ((*bullet)->getCenterX() < -float((*bullet)->getWidth()) / 2.f ||
-            (*bullet)->getCenterX() > SCREEN_WIDTH + float((*bullet)->getWidth()) / 2.f ||
-            (*bullet)->getCenterY() < -float((*bullet)->getHeight()) / 2.f ||
-            (*bullet)->getCenterY() > SCREEN_HEIGHT + float((*bullet)->getHeight()) / 2.f) {
-
+        if ((*bullet)->outsideScreen()) {
             delete (*bullet);
             bullets.erase(bullet++);
         }

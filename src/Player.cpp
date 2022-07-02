@@ -4,10 +4,10 @@ Point PlayerSprite::getMovementDirection() {
     Point direction(0.f, 0.f);
 
 	if (is_key_pressed(VK_W))
-		direction.y += 1.f;
+		direction.y -= 1.f;
 
 	if (is_key_pressed(VK_S))
-		direction.y -= 1.f;
+		direction.y += 1.f;
 
 	if (is_key_pressed(VK_D))
 		direction.x += 1.f;
@@ -49,9 +49,9 @@ void PlayerSprite::moveWithInertiaAndRotation(float dt) {
     if ((expected_direction.x == 0.f) && (expected_direction.y == 0.f))
         angle = getAngle();
     else 
-        angle = -expected_direction.getAngle() + M_PI_2;
+        angle = expected_direction.getAngle();
     getToAngleNonUniform(angle, dt);
-    Point direction(-m_angle + M_PI_2);
+    Point direction(m_angle);
     float velocity;
     if ((expected_direction.x == 0.f) && (expected_direction.y == 0.f)) {
         m_last_velocity /= (dt * (1 / dt + 2));
@@ -62,7 +62,7 @@ void PlayerSprite::moveWithInertiaAndRotation(float dt) {
         velocity = m_velocity;
     }
 
-    float new_centerY = m_centerY - m_last_velocity_direction.y * velocity * dt;
+    float new_centerY = m_centerY + m_last_velocity_direction.y * velocity * dt;
     float new_centerX = m_centerX + m_last_velocity_direction.x * velocity * dt;
 
     if (new_centerX < 16.f)
@@ -84,7 +84,7 @@ void PlayerArrow::rotateToMouseDirection() {
     float x = float(get_cursor_x());
     float y = float(get_cursor_y());
     m_direction = Point(x - m_centerX, y - m_centerY);
-    rotate(m_direction.getAngle() + M_PI_2);
+    rotate(m_direction.getAngle());
 }
 
 void PlayerArrow::setCenter(float x, float y) {
