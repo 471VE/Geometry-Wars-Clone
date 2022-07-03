@@ -30,6 +30,7 @@ void Enemy::updateFragments(float dt) {
 }
 
 void Enemy::die() {
+    game_score += m_score;
     m_dead = true;
     explode();
 }
@@ -74,6 +75,7 @@ Enemy::Enemy(const char* fname, float velocity,  float angular_velocity, int liv
 Enemy::Enemy(const Enemy& enemy)
     : GameObject(enemy)
     , m_lives(enemy.m_lives)
+    , m_score(enemy.m_score)
 {
     m_centerX = getRandom(float(m_width), float(SCREEN_WIDTH - m_width));
     m_centerY = getRandom(float(m_height), float(SCREEN_HEIGHT - m_height));

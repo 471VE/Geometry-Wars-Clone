@@ -9,6 +9,7 @@
 
 // backbuffer
 extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+extern int game_score;
 
 #ifndef VK_ESCAPE
 #  define VK_ESCAPE 0x1B

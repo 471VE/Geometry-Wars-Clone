@@ -17,8 +17,8 @@
 //  is_window_active() - returns true if window is active
 //  schedule_quit_game() - quit game after act()
 
-//Circle player = {{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}, 20};
 
+int game_score = 0;
 
 Player player;
 BulletSet bullet_set;
@@ -51,7 +51,6 @@ void act(float dt, FPS& fps) {
 	if (is_key_pressed(VK_DOWN)) {
 		mciSendString("PLAY sample from 0 repeat","",0,0);
 	}
-		//mciSendString("close MP3","",0,0);
 
 	player.update(dt);
 	Point player_position = player.getCenter();
@@ -62,7 +61,8 @@ void act(float dt, FPS& fps) {
 	messages_to_render.clear();
 	if (fps.on)
 		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 10, 10));
-	messages_to_render.push_back(MessageToRender("outrun future", "Sasai", 100, 100, 100, 255, 0, 0));
+	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20, 50, 177, 250, 60));
+	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 70, 50, 177, 250, 60));
 }
 
 // fill buffer in this function

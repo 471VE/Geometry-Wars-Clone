@@ -103,10 +103,19 @@ static void CALLBACK update_proc(HWND hwnd) {
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message)
 	{
+		case WM_ERASEBKGND:
+        	return (LRESULT)1;
 		case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
+			HDC hdcMem;
+			HBITMAP hbmMem;
+			HANDLE hOld;
 			HDC hdc = BeginPaint(hwnd, &ps);
+
+			hdcMem = CreateCompatibleDC(hdc);
+    		hbmMem = CreateCompatibleBitmap(hdc, SCREEN_WIDTH, SCREEN_HEIGHT);
+			hOld = SelectObject(hdcMem, hbmMem);
 
 			BITMAPINFOHEADER bih;
 			bih.biSize = sizeof(bih);
@@ -120,8 +129,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			bih.biYPelsPerMeter = 96;
 			bih.biClrUsed = 0;
 			bih.biClrImportant = 0;
+
 			SetDIBitsToDevice(
-				hdc,
+				hdcMem,
 				0, 0,
 				SCREEN_WIDTH, SCREEN_HEIGHT,
 				0, 0,
@@ -129,8 +139,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 				buffer,
 				(BITMAPINFO*)&bih,
 				DIB_RGB_COLORS);
+			render_messages(hdcMem);
 
-			render_messages(hdc);
+			BitBlt(hdc, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, hdcMem, 0, 0, SRCCOPY);
+			SelectObject(hdcMem, hOld);
+			DeleteObject(hbmMem);
+    		DeleteDC (hdcMem);
+			
 			EndPaint(hwnd, &ps);
 			}
 			break;
