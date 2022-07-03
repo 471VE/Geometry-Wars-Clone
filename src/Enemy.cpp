@@ -3,8 +3,19 @@
 
 #include "Enemy.h"
 
+
+void Enemy::spawningAnimation(float dt) {
+    m_spawn_time += dt;
+    if (m_spawn_time > m_max_spawn_time)
+        m_spawning = false;
+}
+
 void Enemy::updateAll(const Point& point, float dt) {
-    if (!m_dead) {
+    if (m_spawning) {
+        spawningAnimation(dt);
+        if (m_dead)
+            updateFragments(dt);
+    } else if (!m_dead) {
         update(point, dt);
         updateHighlightStatus(dt);
     } else
@@ -53,6 +64,7 @@ Enemy::Enemy(const char* fname, float velocity,  float angular_velocity, int liv
     : GameObject(fname, 0, 0, angular_velocity, velocity)
     , m_lives(lives)
     , m_score(m_score)
+    , m_spawning(true)
 {   
     m_centerX = getRandom(float(m_width), float(SCREEN_WIDTH - m_width));
     m_centerY = getRandom(float(m_height), float(SCREEN_HEIGHT - m_height));
@@ -62,6 +74,7 @@ Enemy::Enemy(const Enemy& enemy)
     : GameObject(enemy)
     , m_lives(enemy.m_lives)
     , m_score(enemy.m_score)
+    , m_spawning(true)
 {
     m_centerX = getRandom(float(m_width), float(SCREEN_WIDTH - m_width));
     m_centerY = getRandom(float(m_height), float(SCREEN_HEIGHT - m_height));

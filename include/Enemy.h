@@ -19,6 +19,7 @@ class Enemy: public GameObject {
         float getRandom(float a, float b);        
         void checkBoundaries(Point& direction);
         virtual void update(const Point& point, float dt) = 0;
+        void spawningAnimation(float dt);
 
         void updateAll(const Point& point, float dt);
         void removeLife();
@@ -33,6 +34,7 @@ class Enemy: public GameObject {
 
         inline bool isDead() { return m_dead; }
         inline bool isDeadCompletely() { return (m_death_time > m_max_death_time); }
+        inline bool isSpawning() { return m_spawning; }
 
     protected:
         int m_lives;
@@ -41,6 +43,10 @@ class Enemy: public GameObject {
         float m_highlight_time = 0;
         const float m_max_highlight_time = 0.1f;
         int m_score;
+
+        bool m_spawning = true;
+        float m_spawn_time = 0.f;
+        float m_max_spawn_time = 1.f;
 };
 
 
