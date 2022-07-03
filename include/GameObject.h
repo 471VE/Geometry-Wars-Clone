@@ -60,7 +60,7 @@ class GameObject: public Sprite {
         void resize(float scaleX, float scaleY);
         void make_transparent(float death_time, float total_time);
         void crop(int x_first, int x_last, int y_first, int y_last);
-        std::vector<GameObject> createFragments(int chunk_sizeX = 10, int chunk_sizeY = 6);
+        std::vector<GameObject> createFragments(int chunk_sizeX = 15, int chunk_sizeY = 4);
 
     protected:
         int m_height_render;

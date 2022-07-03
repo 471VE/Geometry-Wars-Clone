@@ -4,7 +4,7 @@
 #include "Enemy.h"
 
 void Enemy::updateAll(const Point& point, float dt) {
-    if (!dead) {
+    if (!m_dead) {
         update(point, dt);
         updateHighlightStatus(dt);
     } else
@@ -12,40 +12,40 @@ void Enemy::updateAll(const Point& point, float dt) {
 }
 
 void Enemy::drawEnemy() {
-    if (dead) 
+    if (m_dead) 
         drawFragments();
-    else if (highlighted)
-        draw(50.f);
+    else if (m_highlighted)
+        draw(100.f);
     else
         draw();
 }
 
 void Enemy::updateFragments(float dt) {
-    death_time += dt;
-    for (auto& fragment: fragments) {
+    m_death_time += dt;
+    for (auto& fragment: m_fragments) {
         fragment.moveInTheLastDirection(dt);
         fragment.rotateCounterClockWise(dt);
-        fragment.make_transparent(death_time, max_death_time);
+        fragment.make_transparent(m_death_time, m_max_death_time);
     }      
 }
 
 void Enemy::die() {
-    dead = true;
+    m_dead = true;
     explode();
 }
 
 void Enemy::drawFragments() {
-    for (auto& fragment: fragments)
+    for (auto& fragment: m_fragments)
         fragment.draw();
 }
 
 void Enemy::updateHighlightStatus(float dt) {
-    if (highlight_time > max_highlight_time) {
-        highlighted = false;
-        highlight_time = 0;
+    if (m_highlight_time > m_max_highlight_time) {
+        m_highlighted = false;
+        m_highlight_time = 0;
     }
-    if (highlighted)
-        highlight_time += dt;
+    if (m_highlighted)
+        m_highlight_time += dt;
 }
 
 float get_sign(float x) {
@@ -54,16 +54,18 @@ float get_sign(float x) {
     return -1.f;
 }
 
-std::mt19937 generator;
+std::random_device dev;
+std::mt19937 generator( dev() );
 
 float Enemy::getRandom(float a, float b) {
     std::uniform_real_distribution<float> uniform(a, b);
     return uniform(generator);
 }
 
-Enemy::Enemy(const char* fname, float velocity,  float angular_velocity, int lives)
+Enemy::Enemy(const char* fname, float velocity,  float angular_velocity, int lives, int m_score)
     : GameObject(fname, 0, 0, angular_velocity, velocity)
     , m_lives(lives)
+    , m_score(m_score)
 {   
     m_centerX = getRandom(float(m_width), float(SCREEN_WIDTH - m_width));
     m_centerY = getRandom(float(m_height), float(SCREEN_HEIGHT - m_height));
@@ -103,7 +105,7 @@ void Enemy::removeLife() {
 
 
 EnemyTypeOne::EnemyTypeOne(const char* fname, float velocity,  float angular_velocity, float rotational_velocity)
-    : Enemy(fname, velocity, angular_velocity, 1)
+    : Enemy(fname, velocity, angular_velocity, 2, 50)
     , m_direction(Point(getRandom(-1.f, 1.f), getRandom(-1.f, 1.f)))
     , m_rotational_velocity(rotational_velocity)
 {
@@ -128,7 +130,7 @@ void EnemyTypeOne::update(const Point& point, float dt) {
 }
 
 EnemyTypeTwo::EnemyTypeTwo(const char* fname, float velocity, float angular_velocity)
-    : Enemy(fname, velocity, angular_velocity, 2)
+    : Enemy(fname, velocity, angular_velocity, 2, 100)
     , m_lifetime(0)
     , m_current_scaleX(1.f)
     , m_current_scaleY(1.f)
@@ -164,7 +166,7 @@ void EnemyTypeTwo::update(const Point& point, float dt) {
 
 EnemyTypeThree::EnemyTypeThree(const char* fname, float min_velocity, float max_velocity,
     float min_angular_velocity, float max_angular_velocity, float angle_threshold)
-    : Enemy(fname, min_velocity, min_angular_velocity, 3)
+    : Enemy(fname, min_velocity, min_angular_velocity, 1, 200)
     , m_min_velocity(min_velocity)
     , m_max_velocity(max_velocity)
     , m_min_angular_velocity(min_angular_velocity)
@@ -227,34 +229,34 @@ void EnemyTypeThree::update(const Point& point, float dt) {
 }
 
 EnemySet::EnemySet(float time_between_enemies, float speedup_coefficient)
-    : original_enemy1(EnemyTypeOne("assets/sprites/enemy1.bmp"))
-    , original_enemy2(EnemyTypeTwo("assets/sprites/enemy2.bmp"))
-    , original_enemy3(EnemyTypeThree("assets/sprites/enemy3.bmp"))
-    , time_elapsed_since_last_enemy(0)
-    , time_between_enemies(time_between_enemies)
-    , speedup_coefficient(speedup_coefficient)
-    , enemies_created(0)
+    : m_original_enemy1(EnemyTypeOne("assets/sprites/enemy1.bmp"))
+    , m_original_enemy2(EnemyTypeTwo("assets/sprites/enemy2.bmp"))
+    , m_original_enemy3(EnemyTypeThree("assets/sprites/enemy3.bmp"))
+    , m_time_elapsed_since_last_enemy(0)
+    , m_time_between_enemies(time_between_enemies)
+    , m_speedup_coefficient(speedup_coefficient)
+    , m_enemies_created(0)
 {
     mciSendString("OPEN assets/SFX/explosion.wav ALIAS explosion",0,0,0);
 }
 
 void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_set) {
-    time_elapsed_since_last_enemy += dt;
-    if (time_elapsed_since_last_enemy > time_between_enemies) {
-        time_elapsed_since_last_enemy = 0;
-        time_between_enemies *= 0.99f;
+    m_time_elapsed_since_last_enemy += dt;
+    if (m_time_elapsed_since_last_enemy > m_time_between_enemies) {
+        m_time_elapsed_since_last_enemy = 0;
+        m_time_between_enemies *= 0.99f;
 
         Enemy* enemy = chooseEnemy();
-        enemies.insert(enemy);
+        m_enemies.insert(enemy);
     }
 
-    for (auto enemy = enemies.begin(); enemy != enemies.end();) {
+    for (auto enemy = m_enemies.begin(); enemy != m_enemies.end();) {
         bool enemy_killed = false;
-        for (auto bullet = bullet_set.bullets.begin(); bullet != bullet_set.bullets.end();) {
+        for (auto bullet = bullet_set.m_bullets.begin(); bullet != bullet_set.m_bullets.end();) {
             if ((*bullet)->hits(*(*enemy))) {
                 if (!(*enemy)->isDead()) {
                     delete (*bullet);
-                    bullet_set.bullets.erase(bullet++);
+                    bullet_set.m_bullets.erase(bullet++);
 
                     (*enemy)->removeLife();
                     if ((*enemy)->getLives() == 0) {
@@ -272,10 +274,10 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
         ++enemy;
     }  
 
-    for (auto enemy = enemies.begin(); enemy != enemies.end();) {
+    for (auto enemy = m_enemies.begin(); enemy != m_enemies.end();) {
         if ((*enemy)->isDeadCompletely()) {
             delete (*enemy);
-            enemies.erase(enemy++);
+            m_enemies.erase(enemy++);
         } else {
             (*enemy)->updateAll(player_center, dt);
             ++enemy;
@@ -284,26 +286,26 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
 }
 
 void EnemySet::draw() {
-    for (auto enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
+    for (auto enemy = m_enemies.begin(); enemy != m_enemies.end(); ++enemy)
         (*enemy)->drawEnemy();
 }
 
 Enemy* EnemySet::chooseEnemy() {
     int enemy_type;
-    if (enemies_created < 3) {
-        enemy_type = enemies_created + 1;
+    if (m_enemies_created < 3) {
+        enemy_type = m_enemies_created + 1;
     } else {
         std::uniform_int_distribution<int> uniform(1, 3);
         enemy_type = uniform(generator);
     }
-    enemies_created++;
+    m_enemies_created++;
     switch(enemy_type) {
         case 1:
-            return new EnemyTypeOne(original_enemy1);
+            return new EnemyTypeOne(m_original_enemy1);
         case 2:
-            return new EnemyTypeTwo(original_enemy2);
+            return new EnemyTypeTwo(m_original_enemy2);
         case 3:
-            return new EnemyTypeThree(original_enemy3);
+            return new EnemyTypeThree(m_original_enemy3);
         default:
             log_error_and_exit("Something went wrong when creating new enemy.");
             return 0;

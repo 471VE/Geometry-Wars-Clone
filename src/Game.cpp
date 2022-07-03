@@ -22,7 +22,7 @@
 
 Player player;
 BulletSet bullet_set;
-EnemySet enemy_set(2.f, 0.99f);
+EnemySet enemy_set(3.f, 0.995f);
 
 
 

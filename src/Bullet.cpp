@@ -32,29 +32,29 @@ bool Bullet::outsideScreen() {
 }
 
 BulletSet::BulletSet()
-    : original_bullet(Bullet("assets/sprites/bullets.bmp"))
-    , time_elapsed_since_last_bullet(0)
+    : m_original_bullet(Bullet("assets/sprites/bullets.bmp"))
+    , m_time_elapsed_since_last_bullet(0)
 {
     mciSendString("OPEN assets/SFX/shot.mp3 ALIAS shot",0,0,0);
 }
 
 void BulletSet::update(const Point& player_center, float dt) {
-    time_elapsed_since_last_bullet += dt;
+    m_time_elapsed_since_last_bullet += dt;
     if (is_key_pressed(VK_SPACE) || is_mouse_button_pressed(0)) {
-        if (time_elapsed_since_last_bullet > 0.15) {
-            time_elapsed_since_last_bullet = 0;
-            Bullet* bullet =  new Bullet(original_bullet, player_center);
+        if (m_time_elapsed_since_last_bullet > 0.15) {
+            m_time_elapsed_since_last_bullet = 0;
+            Bullet* bullet =  new Bullet(m_original_bullet, player_center);
             bullet->initialMove();
-            bullets.insert(bullet);
+            m_bullets.insert(bullet);
             mciSendString("PLAY shot from 0",0,0,0);
         }
     }
 
-    for (auto bullet = bullets.begin(); bullet != bullets.end();) {
+    for (auto bullet = m_bullets.begin(); bullet != m_bullets.end();) {
         (*bullet)->move(dt);
         if ((*bullet)->outsideScreen()) {
             delete (*bullet);
-            bullets.erase(bullet++);
+            m_bullets.erase(bullet++);
         }
         else
             ++bullet;
@@ -63,6 +63,6 @@ void BulletSet::update(const Point& player_center, float dt) {
 }
 
 void BulletSet::draw() {
-    for (auto bullet = bullets.begin(); bullet != bullets.end(); ++bullet)
+    for (auto bullet = m_bullets.begin(); bullet != m_bullets.end(); ++bullet)
         (*bullet)->draw();
 }

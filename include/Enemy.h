@@ -13,7 +13,7 @@
 
 class Enemy: public GameObject {
     public: 
-        Enemy(const char* fname, float velocity = 200.f,  float angular_velocity = 0.f, int lives = 1);
+        Enemy(const char* fname, float velocity = 200.f,  float angular_velocity = 0.f, int lives = 1, int score = 50);
         Enemy(const Enemy& enemy);
 
         float getRandom(float a, float b);        
@@ -27,26 +27,27 @@ class Enemy: public GameObject {
         void drawEnemy();
         void updateHighlightStatus(float dt);
     
-        inline void highlightOn() {  highlighted = true; }
+        inline void highlightOn() {  m_highlighted = true; }
 
         void updateFragments(float dt);
         void drawFragments();
 
         void die();
-        void explode() { fragments = createFragments(); }
+        void explode() { m_fragments = createFragments(); }
 
-        inline bool isDead() { return dead; }
-        inline bool isDeadCompletely() { return (death_time > max_death_time); }
+        inline bool isDead() { return m_dead; }
+        inline bool isDeadCompletely() { return (m_death_time > m_max_death_time); }
 
     protected:
         int m_lives;
-        bool highlighted = false;
-        bool dead = false;
-        float highlight_time = 0;
-        const float max_highlight_time = 0.15f;
-        std::vector<GameObject> fragments;
-        float death_time = 0.f;
-        float max_death_time = 2.f;
+        bool m_highlighted = false;
+        bool m_dead = false;
+        float m_highlight_time = 0;
+        const float m_max_highlight_time = 0.1f;
+        std::vector<GameObject> m_fragments;
+        float m_death_time = 0.f;
+        float m_max_death_time = 2.f;
+        int m_score;
 };
 
 
@@ -103,12 +104,12 @@ class EnemySet {
         Enemy* chooseEnemy();
 
     protected:
-        EnemyTypeOne original_enemy1;
-        EnemyTypeTwo original_enemy2;
-        EnemyTypeThree original_enemy3;
-        std::unordered_set<Enemy*> enemies;
-        float time_elapsed_since_last_enemy;
-        float time_between_enemies;
-        int enemies_created;
-        float speedup_coefficient;
+        EnemyTypeOne m_original_enemy1;
+        EnemyTypeTwo m_original_enemy2;
+        EnemyTypeThree m_original_enemy3;
+        std::unordered_set<Enemy*> m_enemies;
+        float m_time_elapsed_since_last_enemy;
+        float m_time_between_enemies;
+        int m_enemies_created;
+        float m_speedup_coefficient;
 };

@@ -27,9 +27,9 @@ class BulletSet {
         void update(const Point& player_center, float dt);
         void draw();
 
-        std::unordered_set<Bullet*> bullets;
+        std::unordered_set<Bullet*> m_bullets;
             
     protected:
-        Bullet original_bullet;
-        float time_elapsed_since_last_bullet;
+        Bullet m_original_bullet;
+        float m_time_elapsed_since_last_bullet;
 };
