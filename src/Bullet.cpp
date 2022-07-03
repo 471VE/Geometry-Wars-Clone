@@ -24,11 +24,23 @@ void Bullet::initialMove() {
 
 bool Bullet::outsideScreen() {
     return (
-        m_centerX < -float(m_width) / 2.f ||
-        m_centerX > SCREEN_WIDTH + float(m_width) / 2.f ||
-        m_centerY < -float(m_height) / 2.f ||
-        m_centerY > SCREEN_HEIGHT + float(m_height) / 2.f
+        m_centerX < m_hitbox_radius / 2.f ||
+        m_centerX > SCREEN_WIDTH - m_hitbox_radius / 2.f ||
+        m_centerY < m_hitbox_radius / 2.f / 2.f ||
+        m_centerY > SCREEN_HEIGHT - m_hitbox_radius / 2.f
     );
+}
+
+void Bullet::explodeBullet() { 
+    explode();
+    m_dead = true;
+}
+
+void Bullet::drawBullet() {
+    if (m_dead) 
+        drawFragments();
+    else
+        draw();
 }
 
 BulletSet::BulletSet()
@@ -51,18 +63,20 @@ void BulletSet::update(const Point& player_center, float dt) {
     }
 
     for (auto bullet = m_bullets.begin(); bullet != m_bullets.end();) {
-        (*bullet)->move(dt);
+        (*bullet)->update(dt);
         if ((*bullet)->outsideScreen()) {
+            if (!(*bullet)->isDead())
+                (*bullet)->explodeBullet();
+        }
+        if ((*bullet)->isDeadCompletely()) {
             delete (*bullet);
             m_bullets.erase(bullet++);
-        }
-        else
+        } else
             ++bullet;
-    }
-        
+    }           
 }
 
 void BulletSet::draw() {
     for (auto bullet = m_bullets.begin(); bullet != m_bullets.end(); ++bullet)
-        (*bullet)->draw();
+        (*bullet)->drawBullet();
 }

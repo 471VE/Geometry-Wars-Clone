@@ -29,11 +29,7 @@ class Enemy: public GameObject {
     
         inline void highlightOn() {  m_highlighted = true; }
 
-        void updateFragments(float dt);
-        void drawFragments();
-
         void die();
-        void explode() { m_fragments = createFragments(); }
 
         inline bool isDead() { return m_dead; }
         inline bool isDeadCompletely() { return (m_death_time > m_max_death_time); }
@@ -44,9 +40,6 @@ class Enemy: public GameObject {
         bool m_dead = false;
         float m_highlight_time = 0;
         const float m_max_highlight_time = 0.1f;
-        std::vector<GameObject> m_fragments;
-        float m_death_time = 0.f;
-        float m_max_death_time = 2.f;
         int m_score;
 };
 

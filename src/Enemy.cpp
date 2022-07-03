@@ -20,24 +20,10 @@ void Enemy::drawEnemy() {
         draw();
 }
 
-void Enemy::updateFragments(float dt) {
-    m_death_time += dt;
-    for (auto& fragment: m_fragments) {
-        fragment.moveInTheLastDirection(dt);
-        fragment.rotateCounterClockWise(dt);
-        fragment.make_transparent(m_death_time, m_max_death_time);
-    }      
-}
-
 void Enemy::die() {
     game_score += m_score;
     m_dead = true;
     explode();
-}
-
-void Enemy::drawFragments() {
-    for (auto& fragment: m_fragments)
-        fragment.draw();
 }
 
 void Enemy::updateHighlightStatus(float dt) {
@@ -255,23 +241,23 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
     for (auto enemy = m_enemies.begin(); enemy != m_enemies.end();) {
         bool enemy_killed = false;
         for (auto bullet = bullet_set.m_bullets.begin(); bullet != bullet_set.m_bullets.end();) {
-            if ((*bullet)->hits(*(*enemy))) {
-                if (!(*enemy)->isDead()) {
-                    delete (*bullet);
-                    bullet_set.m_bullets.erase(bullet++);
+            if (!(*bullet)->isDead()) {
+                if ((*bullet)->hits(*(*enemy))) {
+                    if (!(*enemy)->isDead()) {
+                        (*bullet)->explodeBullet();
 
-                    (*enemy)->removeLife();
-                    if ((*enemy)->getLives() == 0) {
-                        (*enemy)->die();      
-                        mciSendString("PLAY explosion from 0",0,0,0);
-                        break;
-                    } else {
-                        (*enemy)->highlightOn();
-                    }
-                } else
-                    ++bullet;
-            } else 
-                ++bullet;
+                        (*enemy)->removeLife();
+                        if ((*enemy)->getLives() == 0) {
+                            (*enemy)->die();      
+                            mciSendString("PLAY explosion from 0",0,0,0);
+                            break;
+                        } else {
+                            (*enemy)->highlightOn();
+                        }
+                    } 
+                }
+            }
+            ++bullet;
         }
         ++enemy;
     }  
