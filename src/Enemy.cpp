@@ -3,6 +3,51 @@
 
 #include "Enemy.h"
 
+void Enemy::updateAll(const Point& point, float dt) {
+    if (!dead) {
+        update(point, dt);
+        updateHighlightStatus(dt);
+    } else
+        updateFragments(dt);
+}
+
+void Enemy::drawEnemy() {
+    if (dead) 
+        drawFragments();
+    else if (highlighted)
+        draw(50.f);
+    else
+        draw();
+}
+
+void Enemy::updateFragments(float dt) {
+    death_time += dt;
+    for (auto& fragment: fragments) {
+        fragment.moveInTheLastDirection(dt);
+        fragment.rotateCounterClockWise(dt);
+        fragment.make_transparent(death_time, max_death_time);
+    }      
+}
+
+void Enemy::die() {
+    dead = true;
+    explode();
+}
+
+void Enemy::drawFragments() {
+    for (auto& fragment: fragments)
+        fragment.draw();
+}
+
+void Enemy::updateHighlightStatus(float dt) {
+    if (highlight_time > max_highlight_time) {
+        highlighted = false;
+        highlight_time = 0;
+    }
+    if (highlighted)
+        highlight_time += dt;
+}
+
 float get_sign(float x) {
     if (x >= 0)
         return 1.f;
@@ -16,8 +61,9 @@ float Enemy::getRandom(float a, float b) {
     return uniform(generator);
 }
 
-Enemy::Enemy(const char* fname, float velocity,  float angular_velocity)
+Enemy::Enemy(const char* fname, float velocity,  float angular_velocity, int lives)
     : GameObject(fname, 0, 0, angular_velocity, velocity)
+    , m_lives(lives)
 {   
     m_centerX = getRandom(float(m_width), float(SCREEN_WIDTH - m_width));
     m_centerY = getRandom(float(m_height), float(SCREEN_HEIGHT - m_height));
@@ -25,65 +71,10 @@ Enemy::Enemy(const char* fname, float velocity,  float angular_velocity)
 
 Enemy::Enemy(const Enemy& enemy)
     : GameObject(enemy)
+    , m_lives(enemy.m_lives)
 {
     m_centerX = getRandom(float(m_width), float(SCREEN_WIDTH - m_width));
     m_centerY = getRandom(float(m_height), float(SCREEN_HEIGHT - m_height));
-}
-
-void Enemy::resize(float scaleX, float scaleY) {
-    m_height_render = int(float(m_height) * scaleY);
-    m_width_render = int(float(m_width) * scaleX);
-
-    m_data_render.clear();
-    m_data_render.resize(m_width_render * m_height_render * m_channels);
-
-    float x, x_floor, x_ceil;
-    float y, y_floor, y_ceil;
-
-    float q1, q2;
-    uint8_t old1, old2, old3, old4;
-
-	for (int i = 0; i < m_height_render; ++i) {
-        for (int j = 0; j < m_width_render; ++j) {
-			x = float(i) / scaleY;
-			y = float(j) / scaleX;
-
-			x_floor = std::floor(x);
-			x_ceil = std::min(float(m_height - 1), std::ceil(x));
-			y_floor = std::floor(y);
-			y_ceil = std::min(float(m_width - 1), std::ceil(y));
-
-			if ((x_ceil == x_floor) && (y_ceil == y_floor))
-                for (int channel = 0; channel < 4; ++channel)
-                    at_render(i, j, channel) = at(int(x), int(y), channel);         
-
-            else if (x_ceil == x_floor)
-                for (int channel = 0; channel < 4; ++channel) {
-                    old1 = at(int(x), int(y_floor), channel);
-                    old2 = at(int(x), int(y_ceil), channel);
-                    at_render(i, j, channel) = uint8_t(float(old1) * (y_ceil - y) + float(old2) * (y - y_floor));
-                }
-
-            else if  (y_ceil == y_floor)
-                for (int channel = 0; channel < 4; ++channel) {
-                    old1 = at(int(x_floor), int(y), channel);
-                    old2 = at(int(x_ceil), int(y), channel);
-                    at_render(i, j, channel) = uint8_t(float(old1) * (x_ceil - x) + float(old2) * (x - x_floor));
-                }
-
-            else
-                for (int channel = 0; channel < 4; ++channel) {
-                    old1 = at(int(x_floor), int(y_floor), channel);
-                    old2 = at(int(x_ceil), int(y_floor), channel);
-                    old3 = at(int(x_floor), int(y_ceil), channel);
-                    old4 = at(int(x_ceil), int(y_ceil), channel);
-
-                    q1 = float(old1) * (x_ceil - x) + float(old2) * (x - x_floor);
-                    q2 = float(old3) * (x_ceil - x) + float(old4) * (x - x_floor);
-                    at_render(i, j, channel) = uint8_t(q1 * (y_ceil - y) + q2 * (y - y_floor));
-                }
-        }
-    }
 }
 
 void Enemy::checkBoundaries(Point& direction) {
@@ -106,9 +97,13 @@ void Enemy::checkBoundaries(Point& direction) {
     }
 }
 
+void Enemy::removeLife() {
+    m_lives--;
+}
+
 
 EnemyTypeOne::EnemyTypeOne(const char* fname, float velocity,  float angular_velocity, float rotational_velocity)
-    : Enemy(fname, velocity, angular_velocity)
+    : Enemy(fname, velocity, angular_velocity, 1)
     , m_direction(Point(getRandom(-1.f, 1.f), getRandom(-1.f, 1.f)))
     , m_rotational_velocity(rotational_velocity)
 {
@@ -133,7 +128,7 @@ void EnemyTypeOne::update(const Point& point, float dt) {
 }
 
 EnemyTypeTwo::EnemyTypeTwo(const char* fname, float velocity, float angular_velocity)
-    : Enemy(fname, velocity, angular_velocity)
+    : Enemy(fname, velocity, angular_velocity, 2)
     , m_lifetime(0)
     , m_current_scaleX(1.f)
     , m_current_scaleY(1.f)
@@ -169,7 +164,7 @@ void EnemyTypeTwo::update(const Point& point, float dt) {
 
 EnemyTypeThree::EnemyTypeThree(const char* fname, float min_velocity, float max_velocity,
     float min_angular_velocity, float max_angular_velocity, float angle_threshold)
-    : Enemy(fname, min_velocity, min_angular_velocity)
+    : Enemy(fname, min_velocity, min_angular_velocity, 3)
     , m_min_velocity(min_velocity)
     , m_max_velocity(max_velocity)
     , m_min_angular_velocity(min_angular_velocity)
@@ -257,31 +252,40 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
         bool enemy_killed = false;
         for (auto bullet = bullet_set.bullets.begin(); bullet != bullet_set.bullets.end();) {
             if ((*bullet)->hits(*(*enemy))) {
-                delete (*bullet);
-                bullet_set.bullets.erase(bullet++);
+                if (!(*enemy)->isDead()) {
+                    delete (*bullet);
+                    bullet_set.bullets.erase(bullet++);
 
-                delete (*enemy);
-                enemies.erase(enemy++);
-                enemy_killed = true;
-                mciSendString("PLAY explosion from 0",0,0,0);
-                break;
-            }
-            else
+                    (*enemy)->removeLife();
+                    if ((*enemy)->getLives() == 0) {
+                        (*enemy)->die();      
+                        mciSendString("PLAY explosion from 0",0,0,0);
+                        break;
+                    } else {
+                        (*enemy)->highlightOn();
+                    }
+                } else
+                    ++bullet;
+            } else 
                 ++bullet;
         }
-        if (!enemy_killed)
-            ++enemy;
+        ++enemy;
     }  
 
     for (auto enemy = enemies.begin(); enemy != enemies.end();) {
-        (*enemy)->update(player_center, dt);
-        ++enemy;
+        if ((*enemy)->isDeadCompletely()) {
+            delete (*enemy);
+            enemies.erase(enemy++);
+        } else {
+            (*enemy)->updateAll(player_center, dt);
+            ++enemy;
+        } 
     }  
 }
 
 void EnemySet::draw() {
     for (auto enemy = enemies.begin(); enemy != enemies.end(); ++enemy)
-        (*enemy)->draw();
+        (*enemy)->drawEnemy();
 }
 
 Enemy* EnemySet::chooseEnemy() {

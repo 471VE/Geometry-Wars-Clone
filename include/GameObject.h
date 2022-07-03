@@ -2,8 +2,12 @@
 
 #include <vector>
 #include <cmath>
+#include <random>
+#include <utility>
+
 #include "Sprite.h"
 #include "Primitives.h"
+
 
 void check_angle(float& angle);
 
@@ -20,6 +24,11 @@ class GameObject: public Sprite {
         inline float getAngle() const { return m_angle; }
         inline float getCenterX() const { return m_centerX; }
         inline float getCenterY() const { return m_centerY; }
+
+        inline void setCenter(const Point& center) {
+            m_centerX = center.x;
+            m_centerY = center.y;
+        }
         
         inline const uint8_t& at_render(int row, int col, int channel) const {
             // Reverse in Y axis since BMP stores image from bottom
@@ -29,9 +38,13 @@ class GameObject: public Sprite {
             return m_data_render[m_channels * ( m_width_render * (m_height_render - 1 - row) + col) + channel];
         }
 
-        void draw();
+        void draw(float add_value = 0);
 
         void move(Point expected_direction, float dt);
+
+        void moveInTheLastDirection(float dt) {
+            move(m_last_velocity_direction, dt);
+        }
 
         void rotateClockWise(float dt) {
             m_angle += m_angular_velocity * dt;
@@ -43,6 +56,11 @@ class GameObject: public Sprite {
         }
 
         bool hits(const GameObject& object);
+
+        void resize(float scaleX, float scaleY);
+        void make_transparent(float death_time, float total_time);
+        void crop(int x_first, int x_last, int y_first, int y_last);
+        std::vector<GameObject> createFragments(int chunk_sizeX = 10, int chunk_sizeY = 6);
 
     protected:
         int m_height_render;

@@ -5,6 +5,12 @@
 #include "GameObject.h"
 #include "Engine.h"
 
+uint8_t clamp_int(int x) {
+    if (x > 255)
+        return 255;
+    return uint8_t(x);
+}
+
 
 void check_angle(float& angle) {
     if (angle > M_PI)
@@ -38,6 +44,7 @@ GameObject::GameObject(const GameObject& object)
     , m_height_render(object.m_height)
     , m_width_render(object.m_width)
     , m_hitbox_radius(object.m_hitbox_radius)
+    , m_last_velocity_direction(object.m_last_velocity_direction)
 {}
 
 
@@ -118,9 +125,14 @@ void GameObject::rotate(float angle) {
         }                
     }
 }
-   
 
-void GameObject::draw() {
+uint8_t clamp(float x) {
+    if (x > 255.f)
+        return 255;
+    return uint8_t(x);
+}
+
+void GameObject::draw(float add_value) {
     int left_GameObject_border = int(m_centerX) - m_width_render / 2;
     int right_GameObject_border = int(m_centerX) + m_width_render / 2;
     int upper_GameObject_border = int(m_centerY) - m_height_render / 2;
@@ -169,9 +181,9 @@ void GameObject::draw() {
                 buffer_green = (uint8_t)(buffer[y][x] >> 8);
                 buffer_blue = (uint8_t)buffer[y][x];
 
-                red = uint8_t(float(at_render(GameObjectY, GameObjectX, 2)) * alpha + (1. - alpha) * buffer_red);
-                green = uint8_t(float(at_render(GameObjectY, GameObjectX, 1)) * alpha + (1. - alpha) * buffer_green);
-                blue = uint8_t(float(at_render(GameObjectY, GameObjectX, 0)) * alpha + (1. - alpha) * buffer_blue);
+                red = clamp(float(at_render(GameObjectY, GameObjectX, 2)) * alpha + (1.f - alpha) * buffer_red + add_value);
+                green = clamp(float(at_render(GameObjectY, GameObjectX, 1)) * alpha + (1.f - alpha) * buffer_green + add_value);
+                blue = clamp(float(at_render(GameObjectY, GameObjectX, 0)) * alpha + (1.f - alpha) * buffer_blue + add_value);
 
                 pixel = (((((0 << 8) | red) << 8) | green) << 8) | blue;
                 buffer[y][x] = pixel;
@@ -200,9 +212,134 @@ bool GameObject::hits(const GameObject& object) {
     float deltaX = object.m_centerX - m_centerX;
     float deltaY = object.m_centerY - m_centerY;
     bool tmp = (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
-    if (tmp) {
-        float angle =0;
-        return (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
-    }
     return (std::sqrt(deltaX * deltaX + deltaY * deltaY) <= m_hitbox_radius + object.m_hitbox_radius);
+}
+
+void GameObject::resize(float scaleX, float scaleY) {
+    m_height_render = int(float(m_height) * scaleY);
+    m_width_render = int(float(m_width) * scaleX);
+
+    m_data_render.clear();
+    m_data_render.resize(m_width_render * m_height_render * m_channels);
+
+    float x, x_floor, x_ceil;
+    float y, y_floor, y_ceil;
+
+    float q1, q2;
+    uint8_t old1, old2, old3, old4;
+
+	for (int i = 0; i < m_height_render; ++i) {
+        for (int j = 0; j < m_width_render; ++j) {
+			x = float(i) / scaleY;
+			y = float(j) / scaleX;
+
+			x_floor = std::floor(x);
+			x_ceil = std::min(float(m_height - 1), std::ceil(x));
+			y_floor = std::floor(y);
+			y_ceil = std::min(float(m_width - 1), std::ceil(y));
+
+			if ((x_ceil == x_floor) && (y_ceil == y_floor))
+                for (int channel = 0; channel < 4; ++channel)
+                    at_render(i, j, channel) = at(int(x), int(y), channel);         
+
+            else if (x_ceil == x_floor)
+                for (int channel = 0; channel < 4; ++channel) {
+                    old1 = at(int(x), int(y_floor), channel);
+                    old2 = at(int(x), int(y_ceil), channel);
+                    at_render(i, j, channel) = uint8_t(float(old1) * (y_ceil - y) + float(old2) * (y - y_floor));
+                }
+
+            else if  (y_ceil == y_floor)
+                for (int channel = 0; channel < 4; ++channel) {
+                    old1 = at(int(x_floor), int(y), channel);
+                    old2 = at(int(x_ceil), int(y), channel);
+                    at_render(i, j, channel) = uint8_t(float(old1) * (x_ceil - x) + float(old2) * (x - x_floor));
+                }
+
+            else
+                for (int channel = 0; channel < 4; ++channel) {
+                    old1 = at(int(x_floor), int(y_floor), channel);
+                    old2 = at(int(x_ceil), int(y_floor), channel);
+                    old3 = at(int(x_floor), int(y_ceil), channel);
+                    old4 = at(int(x_ceil), int(y_ceil), channel);
+
+                    q1 = float(old1) * (x_ceil - x) + float(old2) * (x - x_floor);
+                    q2 = float(old3) * (x_ceil - x) + float(old4) * (x - x_floor);
+                    at_render(i, j, channel) = uint8_t(q1 * (y_ceil - y) + q2 * (y - y_floor));
+                }
+        }
+    }
+}
+
+
+void GameObject::make_transparent(float death_time, float total_time) {
+    for (int y = 0; y < m_height_render; ++y) {
+        for (int x = 0; x < m_width_render; ++x) {
+            at_render(y, x, 3) = uint8_t(float(at_render(y, x, 3) * (1- death_time/total_time)));
+        }
+    }  
+}
+
+void GameObject::crop(int x_first, int x_last, int y_first, int y_last) {
+    m_data = m_data_render;
+    m_width = m_width_render;
+    m_height = m_height_render;
+
+    m_width_render = x_last - x_first;
+    m_height_render = y_last - y_first;
+    m_data_render.clear();
+    m_data_render.resize(m_width_render * m_height_render * m_channels, 0);
+
+    for (int i = 0; i < m_width_render; ++i) {
+        for (int j = 0; j < m_height_render; ++j) {
+            if (at(y_first + j, x_first + i, 3) == 255) {
+                for (int channel = 0; channel < m_channels; ++channel) {
+                    at_render(j, i, channel) = at(y_first + j, x_first + i, channel);
+                }
+            }
+        }
+    }
+
+    m_data = m_data_render;
+
+    m_centerX = m_centerX - float(m_width) / 2.f + float(x_first + x_last) / 2.f;
+    m_centerY = m_centerY - float(m_height) / 2.f + float(y_first + y_last) / 2.f;
+
+    m_last_velocity_direction.x = float(x_first + x_last - m_width) / (2.f * float(m_width));
+    m_last_velocity_direction.y = float(y_first + y_last - m_height) / (2.f * float(m_height));
+
+    m_width = m_width_render;
+    m_height = m_height_render;
+    m_velocity = 600.f * rand() / static_cast<float>(RAND_MAX);
+    m_angular_velocity = M_PI * rand() / static_cast<float>(RAND_MAX);
+}
+
+std::vector<GameObject> GameObject::createFragments(int chunk_sizeX, int chunk_sizeY) {
+    std::uniform_real_distribution<float> uniform(0.5f, 1.5f);
+    int new_width = m_width;
+    while (new_width % chunk_sizeX != 0)
+        new_width++;
+
+    int new_height = m_height;
+    while (new_height % chunk_sizeY != 0)
+        new_height++;
+    resize(float(new_width) / float(m_width), float(new_height) / float(m_height));
+
+    m_data = m_data_render;
+    m_height = m_height_render;
+    m_width = m_width_render;
+
+    int number_of_chunksX = m_width_render / chunk_sizeX;
+    int number_of_chunksY = m_height_render / chunk_sizeY;
+
+    std::vector<GameObject> fragments;
+
+    for (int chunkX = 0; chunkX < number_of_chunksX; ++chunkX) {
+        for (int chunkY = 0; chunkY < number_of_chunksY; ++chunkY) {
+            GameObject fragment(*this);
+            fragment.crop(chunkX * chunk_sizeX, (chunkX + 1) * chunk_sizeX, chunkY * chunk_sizeY, (chunkY + 1) * chunk_sizeY);
+            fragments.push_back(fragment);
+        }
+    }
+    return fragments;
 }
