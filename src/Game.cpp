@@ -17,22 +17,22 @@
 //  is_window_active() - returns true if window is active
 //  schedule_quit_game() - quit game after act()
 
-
 int game_score = 0;
+bool game_over = false;
 
 Player player;
 BulletSet bullet_set;
-EnemySet enemy_set(3.f, 0.995f);
+EnemySet enemy_set(TIME_BETWEEN_ENEMIES, TIME_BETWEEN_ENEMIES_MULTIPLICATION_COEF);
 
 
 
 // initialize game data in this function
 void initialize() {
-	mciSendString("OPEN assets/music/test.mp3 ALIAS sample",0,0,0);
-	mciSendString("PLAY sample repeat",0,0,0);
+	mciSendString("OPEN assets/music/test.mp3 ALIAS soundtrack",0,0,0);
+	mciSendString("PLAY soundtrack repeat",0,0,0);
 }
 
-void fade_audio() {
+void reduce_brightness() {
 
 }
 
@@ -56,21 +56,23 @@ void act(float dt, FPS& fps) {
 	Point player_position = player.getCenter();
 
 	bullet_set.update(player_position, dt);
-	enemy_set.update(player_position, dt, bullet_set);
+	enemy_set.update(player_position, dt, bullet_set, player);
 
 	messages_to_render.clear();
 	if (fps.on)
 		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 10, 10));
-	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20, 50, 177, 250, 60));
-	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 70, 50, 177, 250, 60));
+	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
+	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 45, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
 }
 
 // fill buffer in this function
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per A, R, G, B)
 void draw() {
-	// clear backbuffer
 	clear_buffer();
-	player.draw();
+
+	if (!player.isDeadCompletely())
+		player.draw();
+
 	enemy_set.draw();
 	bullet_set.draw();
 }
@@ -79,5 +81,5 @@ void draw() {
 void finalize() {
 	mciSendString("close shot",0,0,0);
 	mciSendString("close explosion",0,0,0);
-	mciSendString("close sample",0,0,0);
+	mciSendString("close soundtrack",0,0,0);
 }

@@ -272,10 +272,10 @@ void Object::resize(float scaleX, float scaleY) {
 }
 
 
-void Object::make_transparent(float death_time, float total_time) {
+void Object::make_transparent(float percentage) {
     for (int y = 0; y < m_height_render; ++y) {
         for (int x = 0; x < m_width_render; ++x) {
-            at_render(y, x, 3) = uint8_t(float(at_render(y, x, 3) * (1- death_time/total_time)));
+            at_render(y, x, 3) = uint8_t(float(at_render(y, x, 3) * percentage));
         }
     }  
 }
@@ -310,7 +310,7 @@ void Object::crop(int x_first, int x_last, int y_first, int y_last) {
 
     m_width = m_width_render;
     m_height = m_height_render;
-    m_velocity = 600.f * rand() / static_cast<float>(RAND_MAX);
+    m_velocity = 900.f * rand() / static_cast<float>(RAND_MAX);
     m_angular_velocity = M_PI * rand() / static_cast<float>(RAND_MAX);
 }
 

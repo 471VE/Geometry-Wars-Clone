@@ -10,6 +10,7 @@
 // backbuffer
 extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 extern int game_score;
+extern bool game_over;
 
 #ifndef VK_ESCAPE
 #  define VK_ESCAPE 0x1B
@@ -29,6 +30,15 @@ extern int game_score;
 #define M_PI 3.141592741f
 #define M_PI_2 1.570796371f
 #define M_PI_4 0.7853981853f
+
+#define TIME_BETWEEN_BULLETS 0.15f
+#define SPAWNING_TIME 1.f
+#define ARROW_FADE_TIME 0.1f
+#define ENEMY_SCORE_TEXT_SIZE 10.f
+#define MAX_HIGHLIGHT_TIME 0.1f
+#define TIME_BETWEEN_ENEMIES 3.f
+#define TIME_BETWEEN_ENEMIES_MULTIPLICATION_COEF 0.995f
+#define GAME_SCORE_TEXT_SIZE 30
 
 struct FPS {
 	bool on = false;

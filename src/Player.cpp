@@ -1,5 +1,55 @@
 #include "Player.h"
 
+PlayerSprite::PlayerSprite(const char *fname, float angular_velocity, float velocity)
+    : GameObject(fname, float(SCREEN_WIDTH) / 2.f, float(SCREEN_HEIGHT) / 2.f, angular_velocity, velocity)
+{
+    for (int i = 0; i < 2; ++i) {
+        m_spawn_objects.push_back(GameObject(fname, m_centerX, m_centerY, angular_velocity, velocity));
+    }
+    m_spawn_objects[1].offsetSpawnTime();
+}
+
+void PlayerSprite::updateAll(float dt) {
+    if (m_spawning && !m_dead) {
+        m_spawn_time += dt;
+        if (m_spawn_time > m_max_spawn_time) {
+            m_spawning = false;
+            m_spawn_objects.clear();
+        }
+        else {
+            spawnObjects(dt);
+        }
+    } else if (!m_dead)
+        moveWithInertiaAndRotation(dt);
+    else
+        updateFragments(dt);
+}
+
+void PlayerSprite::drawPlayerSprite() {
+    if (m_dead) 
+        drawFragments();
+    else if (m_spawning)
+        drawSpawning();
+    else
+        draw();
+}
+
+void PlayerSprite::die() {
+    m_dead = true;
+    explode();
+}
+
+void PlayerSprite::spawnObjects(float dt) {
+    for (auto& object: m_spawn_objects)
+        object.spawningAnimation(dt);
+}
+
+void PlayerSprite::drawSpawning() {
+    for (auto& object: m_spawn_objects)
+        if (object.getSpawnTime() > 0)
+            object.draw();
+}
+
 Point PlayerSprite::getMovementDirection() {
     Point direction(0.f, 0.f);
 
@@ -93,7 +143,7 @@ void PlayerArrow::setCenter(float x, float y) {
 }
 
 void Player::update(float dt) {
-    player_sprite.moveWithInertiaAndRotation(dt);
+    player_sprite.updateAll(dt);
     player_arrow.setCenter(player_sprite.getCenterX(), player_sprite.getCenterY());
-	player_arrow.rotateToMouseDirection();
+    player_arrow.incrementSpawnTime(dt);
 }

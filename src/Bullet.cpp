@@ -52,8 +52,8 @@ BulletSet::BulletSet()
 
 void BulletSet::update(const Point& player_center, float dt) {
     m_time_elapsed_since_last_bullet += dt;
-    if (is_key_pressed(VK_SPACE) || is_mouse_button_pressed(0)) {
-        if (m_time_elapsed_since_last_bullet > 0.15) {
+    if (!game_over && (is_key_pressed(VK_SPACE) || is_mouse_button_pressed(0))) {
+        if (m_time_elapsed_since_last_bullet > TIME_BETWEEN_BULLETS) {
             m_time_elapsed_since_last_bullet = 0;
             Bullet* bullet =  new Bullet(m_original_bullet, player_center);
             bullet->initialMove();

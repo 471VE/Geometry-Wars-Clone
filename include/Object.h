@@ -56,9 +56,9 @@ class Object: public Sprite {
         bool hits(const Object& object);
 
         void resize(float scaleX, float scaleY);
-        void make_transparent(float death_time, float total_time);
+        void make_transparent(float percentage);
         void crop(int x_first, int x_last, int y_first, int y_last);
-        std::vector<Object> createFragments(int chunk_sizeX = 15, int chunk_sizeY = 4);
+        std::vector<Object> createFragments(int chunk_sizeX = 15, int chunk_sizeY = 10);
 
     protected:
         int m_height_render;
