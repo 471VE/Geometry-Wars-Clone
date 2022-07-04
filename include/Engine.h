@@ -22,12 +22,14 @@ extern int highscore;
 #  define VK_RIGHT  0x27
 #  define VK_DOWN   0x28
 #  define VK_RETURN 0x0D
-#  define VK_W      0x57
-#  define VK_A      0x41
-#  define VK_S      0x53
-#  define VK_D      0x44
-#  define VK_T      0x54
+#  define VK_F1	    0x70
 #endif
+
+#define VK_W        0x57
+#define VK_A        0x41
+#define VK_S        0x53
+#define VK_D        0x44
+#define VK_T        0x54
 
 #define M_PI 3.141592741f
 #define M_PI_2 1.570796371f

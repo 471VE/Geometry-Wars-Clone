@@ -39,7 +39,7 @@ void GameObject::updateFragments(float dt) {
     for (auto& fragment: m_fragments) {
         fragment.moveInTheLastDirection(dt);
         fragment.rotateCounterClockWise(dt);
-        fragment.make_transparent(1.f - m_death_time/m_max_death_time);
+        fragment.make_transparent(std::max(1.f - m_death_time/m_max_death_time, 0.f));
     }      
 }
 

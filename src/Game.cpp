@@ -23,15 +23,20 @@
 int game_score = 0;
 int highscore;
 bool game_over = false;
-uint32_t background_buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
 
 Player player;
 BulletSet bullet_set;
 EnemySet enemy_set(TIME_BETWEEN_ENEMIES, TIME_BETWEEN_ENEMIES_MULTIPLICATION_COEF);
+
 Object restart_sign("assets/sprites/restart_sign.bmp", float(SCREEN_WIDTH / 2), float(SCREEN_HEIGHT - 110));
 float wait_for_restart = false;
+float wait_for_restart_time = 0;
+float time_since_last_game_start = 0;
 
-Background bg("assets/sprites/background.bmp");
+bool paused = false;
+
+Soundtrack soundtrack;
+Background background("assets/sprites/background.bmp");
 
 // initialize game data in this function
 void initialize() {
@@ -71,29 +76,17 @@ void reduce_brightness(float factor) {
     }
 }
 
-void pause_game() {
-
-}
-
-void draw_background() {
-	for (int x = 2; x < SCREEN_WIDTH - 2; ++x) {
-		for (int y = 2; y < SCREEN_HEIGHT - 2; ++y) {
-			if (((x - 2) / 4) % 2 == 0) {
-				if (((y - 2) / 4) % 2 == 0) {
-					buffer[y][x] = 0x00181851;
-				}
-			}
-		}
-	}
-}
 
 // this function is called to update game data,
 // dt - time elapsed since the previous update (in seconds)
 void act(float dt, FPS& fps) {
-	if (is_key_pressed(VK_ESCAPE)) {
-		pause_game();
-		mciSendString("PLAY pause from 0",0,0,0);
+	if (is_key_pressed(VK_F1))
 		schedule_quit_game();
+
+	if (time_since_last_game_start > DEATH_TIME && is_key_pressed(VK_ESCAPE) && !paused && !player.isDead()) {
+		mciSendString("PLAY pause from 0",0,0,0);
+		paused = true;
+		soundtrack.decrease_volume();
 	}
 	if (is_key_pressed(VK_T)) {
 		if (!fps.button_press_time) fps.on = !fps.on;
@@ -102,11 +95,19 @@ void act(float dt, FPS& fps) {
 		fps.button_press_time = 0.f;
 	}
 
-	player.update(dt);
-	Point player_position = player.getCenter();
+	time_since_last_game_start += dt;
 
-	bullet_set.update(player_position, dt);
-	enemy_set.update(player_position, dt, bullet_set, player);
+	if (!paused) {
+		player.update(dt);
+		Point player_position = player.getCenter();
+
+		bullet_set.update(player_position, dt);
+		enemy_set.update(player_position, dt, bullet_set, player);
+	} else if (is_key_pressed(VK_SPACE)) {
+		mciSendString("PLAY pause from 0",0,0,0);
+		paused = false;
+		soundtrack.increase_volume();
+	}
 
 	messages_to_render.clear();
 	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20));
@@ -127,20 +128,25 @@ void act(float dt, FPS& fps) {
 			player = Player();
 			enemy_set.reset();
 			wait_for_restart = false;
-		}
+			wait_for_restart_time = 0;
+			time_since_last_game_start = 0;
+		} else
+			wait_for_restart_time += dt;
 	}
 	if (game_over && is_key_pressed(VK_RETURN)) {
 		wait_for_restart = true;
 		enemy_set.explodeAll();
 		mciSendString("PLAY restart from 0",0,0,0);
+		soundtrack.increase_volume();
 	}
+	soundtrack.update(dt);
 }
 
 // fill buffer in this function
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per A, R, G, B)
 void draw() {
 	clear_buffer();
-	bg.draw();
+	background.draw();
 
 	if (!player.isDeadCompletely())
 		player.draw();
@@ -148,15 +154,25 @@ void draw() {
 	enemy_set.draw();
 	bullet_set.draw();
 
-	if (player.isDead()) {
+	if (time_since_last_game_start < DEATH_TIME) {
+		reduce_brightness((std::max)(1.f, 3.f - 2 * time_since_last_game_start / DEATH_TIME));
+	} else if (player.isDead()) {
 		if (!player.isDeadCompletely())
 			reduce_brightness(1 + 2 * player.getDeathTime() / DEATH_TIME);
 		else {
 			reduce_brightness(3.f);
 		}
-		float transparency_root = std::sin(M_PI_2 * player.getDeathTime());
-		restart_sign.make_transparent(transparency_root * transparency_root, true);
-		restart_sign.draw();
+		if (!wait_for_restart) {
+			float transparency_root = std::sin(M_PI_2 * player.getDeathTime());
+			restart_sign.make_transparent(transparency_root * transparency_root, true);
+			restart_sign.draw();
+		} else {
+			float transparency_root = std::sin(2 * M_PI * wait_for_restart_time - M_PI_4);
+			restart_sign.make_transparent(float((transparency_root * transparency_root) > 0.5), true);
+			restart_sign.draw();
+		}
+	} else if (paused) {
+		reduce_brightness(3.f);
 	}
 }
 
