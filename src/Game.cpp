@@ -9,6 +9,7 @@
 #include "Enemy.h"
 #include "Soundtrack.h"
 #include "Highscore.h"
+#include "Background.h"
 
 //  is_key_pressed(int button_vk_code) - check if a key is pressed,
 //                                       use keycodes (VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B')
@@ -22,6 +23,7 @@
 int game_score = 0;
 int highscore;
 bool game_over = false;
+uint32_t background_buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
 
 Player player;
 BulletSet bullet_set;
@@ -29,7 +31,7 @@ EnemySet enemy_set(TIME_BETWEEN_ENEMIES, TIME_BETWEEN_ENEMIES_MULTIPLICATION_COE
 Object restart_sign("assets/sprites/restart_sign.bmp", float(SCREEN_WIDTH / 2), float(SCREEN_HEIGHT - 110));
 float wait_for_restart = false;
 
-
+Background bg("assets/sprites/background.bmp");
 
 // initialize game data in this function
 void initialize() {
@@ -38,6 +40,8 @@ void initialize() {
 	mciSendString("OPEN assets/music/game_over.mp3 ALIAS soundtrack",0,0,0);
 
 	mciSendString("OPEN assets/SFX/lose.mp3 ALIAS lose",0,0,0);
+	mciSendString("SetAudio lose volume to 500",0,0,0);
+
 	mciSendString("OPEN assets/SFX/restart.mp3 ALIAS restart",0,0,0);
 
 	mciSendString("OPEN assets/SFX/explosion.mp3 ALIAS explosion",0,0,0);
@@ -72,7 +76,15 @@ void pause_game() {
 }
 
 void draw_background() {
-
+	for (int x = 2; x < SCREEN_WIDTH - 2; ++x) {
+		for (int y = 2; y < SCREEN_HEIGHT - 2; ++y) {
+			if (((x - 2) / 4) % 2 == 0) {
+				if (((y - 2) / 4) % 2 == 0) {
+					buffer[y][x] = 0x00181851;
+				}
+			}
+		}
+	}
 }
 
 // this function is called to update game data,
@@ -128,8 +140,7 @@ void act(float dt, FPS& fps) {
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per A, R, G, B)
 void draw() {
 	clear_buffer();
-
-	draw_background();
+	bg.draw();
 
 	if (!player.isDeadCompletely())
 		player.draw();

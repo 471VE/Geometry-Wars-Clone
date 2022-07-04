@@ -9,6 +9,7 @@
 
 // backbuffer
 extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+extern uint32_t background_buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 extern int game_score;
 extern bool game_over;
 extern int highscore;
