@@ -147,3 +147,10 @@ void Player::update(float dt) {
     player_arrow.setCenter(player_sprite.getCenterX(), player_sprite.getCenterY());
     player_arrow.incrementSpawnTime(dt);
 }
+
+#include <windows.h>
+
+void Player::die() {
+    player_sprite.die();
+    mciSendString("PLAY lose from 0",0,0,0);
+}

@@ -46,9 +46,7 @@ void Bullet::drawBullet() {
 BulletSet::BulletSet()
     : m_original_bullet(Bullet("assets/sprites/bullets.bmp"))
     , m_time_elapsed_since_last_bullet(0)
-{
-    mciSendString("OPEN assets/SFX/shot.mp3 ALIAS shot",0,0,0);
-}
+{}
 
 void BulletSet::update(const Point& player_center, float dt) {
     m_time_elapsed_since_last_bullet += dt;

@@ -76,7 +76,8 @@ class Player {
 
         bool hits(Object& object) { return (player_sprite.hits(object)); }
         void update(float dt);
-        void die() { player_sprite.die(); }
+        void die();
+
         inline bool isDead() { return player_sprite.isDead(); }
         inline float getDeathTime() { return player_sprite.getDeathTime(); }
         inline bool isDeadCompletely() { return player_sprite.isDeadCompletely(); }

@@ -7,6 +7,7 @@
 #include "Player.h"
 #include "Bullet.h"
 #include "Enemy.h"
+#include "Soundtrack.h"
 
 //  is_key_pressed(int button_vk_code) - check if a key is pressed,
 //                                       use keycodes (VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B')
@@ -18,6 +19,7 @@
 //  schedule_quit_game() - quit game after act()
 
 int game_score = 0;
+int highscore = 0;
 bool game_over = false;
 
 Player player;
@@ -30,7 +32,20 @@ float wait_for_restart = false;
 
 // initialize game data in this function
 void initialize() {
-	mciSendString("OPEN assets/music/test.mp3 ALIAS soundtrack",0,0,0);
+	mciSendString("OPEN assets/music/game_over.mp3 ALIAS soundtrack",0,0,0);
+
+	mciSendString("OPEN assets/SFX/lose.mp3 ALIAS lose",0,0,0);
+	mciSendString("OPEN assets/SFX/restart.mp3 ALIAS restart",0,0,0);
+
+	mciSendString("OPEN assets/SFX/explosion.mp3 ALIAS explosion",0,0,0);
+	mciSendString("SetAudio explosion volume to 500",0,0,0);
+
+	mciSendString("OPEN assets/SFX/shot.mp3 ALIAS shot",0,0,0);
+	mciSendString("SetAudio shot volume to 300",0,0,0);
+
+	mciSendString("OPEN assets/SFX/pause.mp3 ALIAS pause",0,0,0);
+
+	mciSendString("SetAudio soundtrack volume to 0",0,0,0);
 	mciSendString("PLAY soundtrack repeat",0,0,0);
 }
 
@@ -47,14 +62,24 @@ void reduce_brightness(float factor) {
 			buffer[y][x] = pixel;
         }
     }
+}
+
+void pause_game() {
+
+}
+
+void draw_background() {
 
 }
 
 // this function is called to update game data,
 // dt - time elapsed since the previous update (in seconds)
 void act(float dt, FPS& fps) {
-	if (is_key_pressed(VK_ESCAPE))
+	if (is_key_pressed(VK_ESCAPE)) {
+		pause_game();
+		mciSendString("PLAY pause from 0",0,0,0);
 		schedule_quit_game();
+	}
 	if (is_key_pressed(VK_T)) {
 		if (!fps.button_press_time) fps.on = !fps.on;
 		fps.button_press_time += dt;
@@ -68,11 +93,20 @@ void act(float dt, FPS& fps) {
 	bullet_set.update(player_position, dt);
 	enemy_set.update(player_position, dt, bullet_set, player);
 
+	if (game_score > highscore)
+		highscore = game_score;
+
 	messages_to_render.clear();
 	if (fps.on)
 		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 10, 10));
+		
 	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
 	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 45, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
+
+	messages_to_render.push_back(MessageToRender(
+		"Arcade", "Highscore", SCREEN_WIDTH - 20, 20, GAME_SCORE_TEXT_SIZE, 177, 250, 60, false));
+	messages_to_render.push_back(MessageToRender(
+		"Arcade", std::to_string(highscore), SCREEN_WIDTH - 20, 45, GAME_SCORE_TEXT_SIZE, 177, 250, 60, false));
 
 	if (wait_for_restart) {
 		if (enemy_set.getNumberOfEnemies() == 0) {
@@ -86,6 +120,7 @@ void act(float dt, FPS& fps) {
 	if (game_over && is_key_pressed(VK_RETURN)) {
 		wait_for_restart = true;
 		enemy_set.explodeAll();
+		mciSendString("PLAY restart from 0",0,0,0);
 	}
 }
 
@@ -93,6 +128,8 @@ void act(float dt, FPS& fps) {
 // uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] - is an array of 32-bit colors (8 bits per A, R, G, B)
 void draw() {
 	clear_buffer();
+
+	draw_background();
 
 	if (!player.isDeadCompletely())
 		player.draw();
@@ -117,4 +154,7 @@ void finalize() {
 	mciSendString("close shot",0,0,0);
 	mciSendString("close explosion",0,0,0);
 	mciSendString("close soundtrack",0,0,0);
+	mciSendString("close restart",0,0,0);
+	mciSendString("close lose",0,0,0);
+	mciSendString("close pause",0,0,0);
 }

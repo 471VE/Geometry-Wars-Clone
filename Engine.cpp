@@ -61,6 +61,10 @@ int nResultsOutrun = AddFontResourceEx(szFontFileOutrun, FR_PRIVATE, NULL);
 
 void render_messages(HDC hdc) {
     for (const auto& message: messages_to_render) {
+		if (message.left_alignment)
+			SetTextAlign(hdc, TA_LEFT);
+		else
+			SetTextAlign(hdc, TA_RIGHT);
 		HFONT hFont = CreateFont(message.size, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, TEXT(const_cast<char*>(message.font.c_str())));
         HFONT hOldFont = (HFONT) SelectObject(hdc, hFont);
         SetBkMode(hdc, TRANSPARENT);

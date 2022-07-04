@@ -129,6 +129,7 @@ class EnemySet {
         inline void reset() {
             m_time_elapsed_since_last_enemy = 0;
             m_time_between_enemies = m_start_time_between_enemies;
+            m_enemies_created = 0;
         }
 
     protected:

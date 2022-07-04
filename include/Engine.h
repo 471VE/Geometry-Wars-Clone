@@ -71,7 +71,7 @@ void log_error_and_exit(std::string message);
 
 struct MessageToRender {
     MessageToRender(std::string font, std::string message, int x, int y, int size = 20,
-		uint8_t color_r = 0, uint8_t color_g = 255, uint8_t color_b = 0)
+		uint8_t color_r = 0, uint8_t color_g = 255, uint8_t color_b = 0, bool left_alignment = true)
         : font(font)
         , message(message)
         , x(x)
@@ -80,12 +80,14 @@ struct MessageToRender {
 		, color_r(color_r)
 		, color_g(color_g)
 		, color_b(color_b)
+		, left_alignment(left_alignment)
     {}
 
 	std::string font;
 	std::string message;
 	int x, y, size;
 	uint8_t color_r, color_g, color_b;
+	bool left_alignment;
 };
 
 extern std::vector<MessageToRender> messages_to_render;
