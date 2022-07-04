@@ -36,9 +36,10 @@ extern bool game_over;
 #define ARROW_FADE_TIME 0.1f
 #define ENEMY_SCORE_TEXT_SIZE 10.f
 #define MAX_HIGHLIGHT_TIME 0.1f
-#define TIME_BETWEEN_ENEMIES 3.f
+#define TIME_BETWEEN_ENEMIES 2.f
 #define TIME_BETWEEN_ENEMIES_MULTIPLICATION_COEF 0.995f
 #define GAME_SCORE_TEXT_SIZE 30
+#define DEATH_TIME 1.5f
 
 struct FPS {
 	bool on = false;

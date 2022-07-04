@@ -31,6 +31,7 @@ class Enemy: public GameObject {
         void updateHighlightStatus(float dt);
     
         inline void highlightOn() {  m_highlighted = true; }
+        inline int getScore() { return m_score; }
 
         void die();
 
@@ -117,11 +118,18 @@ class EnemyTypeThree: public Enemy {
 
 class EnemySet {
     public:
-        EnemySet(float time_between_enemies = 2.f, float speedup_coefficient = 0.99f);
+        EnemySet(float time_between_enemies = TIME_BETWEEN_ENEMIES,
+            float speedup_coefficient = TIME_BETWEEN_ENEMIES_MULTIPLICATION_COEF);
 
         void update(const Point& player_center, float dt, BulletSet& bullet_set, Player& player);
         void draw();
         Enemy* chooseEnemy();
+        void explodeAll();
+        inline int getNumberOfEnemies() { return int(m_enemies.size()); }
+        inline void reset() {
+            m_time_elapsed_since_last_enemy = 0;
+            m_time_between_enemies = m_start_time_between_enemies;
+        }
 
     protected:
         EnemyTypeOne m_original_enemy1;
@@ -130,6 +138,7 @@ class EnemySet {
         std::unordered_set<Enemy*> m_enemies;
         float m_time_elapsed_since_last_enemy;
         float m_time_between_enemies;
+        float m_start_time_between_enemies;
         int m_enemies_created;
         float m_speedup_coefficient;
 };

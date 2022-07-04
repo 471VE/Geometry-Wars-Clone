@@ -56,7 +56,7 @@ class Object: public Sprite {
         bool hits(const Object& object);
 
         void resize(float scaleX, float scaleY);
-        void make_transparent(float percentage);
+        void make_transparent(float percentage, bool reset = false);
         void crop(int x_first, int x_last, int y_first, int y_last);
         std::vector<Object> createFragments(int chunk_sizeX = 15, int chunk_sizeY = 10);
 

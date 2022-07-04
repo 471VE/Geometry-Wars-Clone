@@ -272,7 +272,12 @@ void Object::resize(float scaleX, float scaleY) {
 }
 
 
-void Object::make_transparent(float percentage) {
+void Object::make_transparent(float percentage, bool reset) {
+    if (reset) {
+        m_data_render = m_data;
+        m_width_render = m_width;
+        m_height_render = m_height;
+    }
     for (int y = 0; y < m_height_render; ++y) {
         for (int x = 0; x < m_width_render; ++x) {
             at_render(y, x, 3) = uint8_t(float(at_render(y, x, 3) * percentage));

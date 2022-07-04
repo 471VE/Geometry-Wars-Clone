@@ -19,6 +19,7 @@ class PlayerSprite: public GameObject {
 
         inline bool isDead() { return m_dead; }
         inline bool isDeadCompletely() { return (m_death_time > m_max_death_time); }
+        inline float getDeathTime() { return m_death_time; }
         inline bool isSpawning() { return m_spawning; }
 
         void spawnObjects(float dt);
@@ -77,6 +78,7 @@ class Player {
         void update(float dt);
         void die() { player_sprite.die(); }
         inline bool isDead() { return player_sprite.isDead(); }
+        inline float getDeathTime() { return player_sprite.getDeathTime(); }
         inline bool isDeadCompletely() { return player_sprite.isDeadCompletely(); }
 
         void draw() {

@@ -25,20 +25,20 @@ void Enemy::updateAll(const Point& point, float dt) {
 
 void Enemy::drawEnemy() {
     if (m_dead) {
-        drawScore();
+        if (!game_over)
+            drawScore();
         drawFragments();
     }
     else if (m_spawning) {
         drawSpawning();
     }
     else if (m_highlighted)
-        draw(20.f);
+        draw(50.f);
     else
         draw();
 }
 
 void Enemy::die() {
-    game_score += m_score;
     m_dead = true;
     explode();
     setScoreCenter();
@@ -338,6 +338,7 @@ EnemySet::EnemySet(float time_between_enemies, float speedup_coefficient)
     , m_original_enemy3(EnemyTypeThree("assets/sprites/enemy3.bmp"))
     , m_time_elapsed_since_last_enemy(0)
     , m_time_between_enemies(time_between_enemies)
+    , m_start_time_between_enemies(time_between_enemies)
     , m_speedup_coefficient(speedup_coefficient)
     , m_enemies_created(0)
 {
@@ -355,8 +356,7 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
     }
 
     for (auto enemy = m_enemies.begin(); enemy != m_enemies.end();) {
-        if (!(*enemy)->isDead() && !player.isDead() && player.hits(*(*enemy))) {
-            (*enemy)->die();
+        if (!(*enemy)->isDead() && !(*enemy)->isSpawning() && !player.isDead() && player.hits(*(*enemy))) {
             player.die();
             game_over = true;
         }
@@ -368,7 +368,8 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
                 (*enemy)->removeLife();
 
                 if ((*enemy)->getLives() == 0) {
-                    (*enemy)->die();      
+                    (*enemy)->die();
+                    game_score += (*enemy)->getScore();
                     mciSendString("PLAY explosion from 0",0,0,0);
                     break;
                 } else
@@ -414,5 +415,12 @@ Enemy* EnemySet::chooseEnemy() {
         default:
             log_error_and_exit("Something went wrong when creating new enemy.");
             return 0;
+    }
+}
+
+void EnemySet::explodeAll() {
+    for (auto enemy = m_enemies.begin(); enemy != m_enemies.end(); ++enemy) {
+        if (!(*enemy)->isDead())
+            (*enemy)->die();  
     }
 }

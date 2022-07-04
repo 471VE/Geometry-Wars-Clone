@@ -21,7 +21,7 @@ class GameObject: public Object {
         std::vector<Object> m_fragments;
 
         float m_death_time = 0.f;
-        float m_max_death_time = 1.5f;
+        float m_max_death_time = DEATH_TIME;
 
         float m_spawn_time = 0.f;
         float m_single_spawn_time = 0.5f;

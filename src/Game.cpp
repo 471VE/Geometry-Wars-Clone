@@ -23,6 +23,8 @@ bool game_over = false;
 Player player;
 BulletSet bullet_set;
 EnemySet enemy_set(TIME_BETWEEN_ENEMIES, TIME_BETWEEN_ENEMIES_MULTIPLICATION_COEF);
+Object restart_sign("assets/sprites/restart_sign.bmp", float(SCREEN_WIDTH / 2), float(SCREEN_HEIGHT - 110));
+float wait_for_restart = false;
 
 
 
@@ -32,7 +34,19 @@ void initialize() {
 	mciSendString("PLAY soundtrack repeat",0,0,0);
 }
 
-void reduce_brightness() {
+void reduce_brightness(float factor) {
+	float red, green, blue;
+	uint32_t pixel;
+	for (int x = 0; x < SCREEN_WIDTH; ++x) {
+        for (int y = 0; y < SCREEN_HEIGHT; ++y) {
+			red = float((uint8_t)(buffer[y][x] >> 16));
+			green = float((uint8_t)(buffer[y][x] >> 8));
+			blue = float((uint8_t)buffer[y][x]);
+			
+			pixel = (((((0 << 8) | uint8_t(red / factor)) << 8) | uint8_t(green / factor)) << 8) | uint8_t(blue / factor);
+			buffer[y][x] = pixel;
+        }
+    }
 
 }
 
@@ -48,10 +62,6 @@ void act(float dt, FPS& fps) {
 		fps.button_press_time = 0.f;
 	}
 
-	if (is_key_pressed(VK_DOWN)) {
-		mciSendString("PLAY sample from 0 repeat","",0,0);
-	}
-
 	player.update(dt);
 	Point player_position = player.getCenter();
 
@@ -63,6 +73,20 @@ void act(float dt, FPS& fps) {
 		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 10, 10));
 	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
 	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 45, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
+
+	if (wait_for_restart) {
+		if (enemy_set.getNumberOfEnemies() == 0) {
+			game_over = false;
+			game_score = 0;
+			player = Player();
+			enemy_set.reset();
+			wait_for_restart = false;
+		}
+	}
+	if (game_over && is_key_pressed(VK_RETURN)) {
+		wait_for_restart = true;
+		enemy_set.explodeAll();
+	}
 }
 
 // fill buffer in this function
@@ -75,6 +99,17 @@ void draw() {
 
 	enemy_set.draw();
 	bullet_set.draw();
+
+	if (player.isDead()) {
+		if (!player.isDeadCompletely())
+			reduce_brightness(1 + 2 * player.getDeathTime() / DEATH_TIME);
+		else {
+			reduce_brightness(3.f);
+		}
+		float transparency_root = std::sin(M_PI_2 * player.getDeathTime());
+		restart_sign.make_transparent(transparency_root * transparency_root, true);
+		restart_sign.draw();
+	}
 }
 
 // free game data in this function
