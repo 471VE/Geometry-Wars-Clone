@@ -358,7 +358,7 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
     for (auto enemy = m_enemies.begin(); enemy != m_enemies.end();) {
         if (!(*enemy)->isDead() && !(*enemy)->isSpawning() && !player.isDead() && player.hits(*(*enemy))) {
             player.die();
-            soundtrack.decrease_volume();
+            game_soundtrack.decrease_volume();
             game_over = true;
         }
 

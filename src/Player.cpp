@@ -130,10 +130,10 @@ void PlayerSprite::moveWithInertiaAndRotation(float dt) {
         m_centerY = new_centerY;
 }
 
-void PlayerArrow::rotateToMouseDirection() {
-    float x = float(get_cursor_x());
-    float y = float(get_cursor_y());
-    m_direction = Point(x - m_centerX, y - m_centerY);
+void PlayerArrow::rotateToMouseDirection(bool paused) {
+    if (!paused)
+        m_direction = Point(float(get_cursor_x()) - m_centerX, float(get_cursor_y()) - m_centerY);
+
     rotate(m_direction.getAngle());
 }
 

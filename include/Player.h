@@ -42,12 +42,12 @@ class PlayerArrow: public GameObject {
 
         Point getDirection() { return m_direction; }
 
-        void rotateToMouseDirection();
+        void rotateToMouseDirection(bool paused);
         void setCenter(float x, float y);
 
         void incrementSpawnTime(float dt) { m_spawn_time += dt; }
-        void drawArrow() {
-            rotateToMouseDirection();
+        void drawArrow(bool paused) {
+            rotateToMouseDirection(paused);
             if (m_spawn_time > SPAWNING_TIME - ARROW_FADE_TIME){
                 if (m_spawn_time < SPAWNING_TIME)
                     make_transparent((m_spawn_time - SPAWNING_TIME + ARROW_FADE_TIME) / ARROW_FADE_TIME);
@@ -82,10 +82,10 @@ class Player {
         inline float getDeathTime() { return player_sprite.getDeathTime(); }
         inline bool isDeadCompletely() { return player_sprite.isDeadCompletely(); }
 
-        void draw() {
+        void draw(bool paused) {
             player_sprite.drawPlayerSprite();
             if (!player_sprite.isDead())
-                player_arrow.drawArrow();
+                player_arrow.drawArrow(paused);
         }
 
     protected:

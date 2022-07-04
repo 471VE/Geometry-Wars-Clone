@@ -4,38 +4,29 @@
 #include <string>
 #include "Engine.h"
 
+#define STOPPING_PLAYBACK 0
+#define INCREASING_VOLUME 1
+#define DECREASING_VOLUME 2
+#define IDLE              3
+
 class Soundtrack {
     public:
-        Soundtrack() {}
-
-        void decrease_volume() {
-            m_target_volume = 400;
-            m_volume_change_rate = (m_target_volume - m_volume) / m_max_change_time;
-        }
-
-        void increase_volume() {
-            m_target_volume = 1000;
-            m_volume_change_rate = (m_target_volume - m_volume) / m_max_change_time;
-        }
-
-        void update(float dt) {
-            if (m_volume != m_target_volume) {
-                m_volume += m_volume_change_rate * dt;
-                if (m_volume > 1000.f)
-                    m_volume = 1000.f;
-                else if (m_volume < 400.f)
-                    m_volume = 400.f;
-                std::string change_volume_string = "SetAudio soundtrack volume to " + std::to_string(int(m_volume));
-                mciSendString(change_volume_string.c_str(),0,0,0);
-            }
-        }
+        Soundtrack(std::string handle);
+        
+        void decrease_volume(float target_volume = 400.f);
+        void increase_volume(float target_volume = 1000.f);
+        void stop();
+        void start();
+        void update(float dt);
 
     protected:
-        float m_change_time = 0.f;
+        std::string m_handle;
+
         float m_max_change_time = DEATH_TIME;
-        float m_volume = 1000.f;
-        float m_target_volume;
+        float m_volume = 0.f;
+        float m_target_volume = 1000.f;
         float m_volume_change_rate;
+        int status = IDLE;
 };
 
-extern Soundtrack soundtrack;
+extern Soundtrack game_soundtrack;
