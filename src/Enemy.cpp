@@ -2,6 +2,7 @@
 #include <random>
 
 #include "Enemy.h"
+#include "Highscore.h"
 
 void Enemy::updateAll(const Point& point, float dt) {
     if (m_spawning && !m_dead) {
@@ -370,6 +371,10 @@ void EnemySet::update(const Point& player_center, float dt, BulletSet& bullet_se
                 if ((*enemy)->getLives() == 0) {
                     (*enemy)->die();
                     game_score += (*enemy)->getScore();
+                    if (game_score > highscore) {
+                        highscore = game_score;
+                        save_highscore(highscore);
+                    }
                     mciSendString("PLAY explosion from 0",0,0,0);
                     break;
                 } else

@@ -8,6 +8,7 @@
 #include "Bullet.h"
 #include "Enemy.h"
 #include "Soundtrack.h"
+#include "Highscore.h"
 
 //  is_key_pressed(int button_vk_code) - check if a key is pressed,
 //                                       use keycodes (VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B')
@@ -19,7 +20,7 @@
 //  schedule_quit_game() - quit game after act()
 
 int game_score = 0;
-int highscore = 0;
+int highscore;
 bool game_over = false;
 
 Player player;
@@ -32,6 +33,8 @@ float wait_for_restart = false;
 
 // initialize game data in this function
 void initialize() {
+	load_highscore(highscore);
+
 	mciSendString("OPEN assets/music/game_over.mp3 ALIAS soundtrack",0,0,0);
 
 	mciSendString("OPEN assets/SFX/lose.mp3 ALIAS lose",0,0,0);
@@ -93,20 +96,17 @@ void act(float dt, FPS& fps) {
 	bullet_set.update(player_position, dt);
 	enemy_set.update(player_position, dt, bullet_set, player);
 
-	if (game_score > highscore)
-		highscore = game_score;
-
 	messages_to_render.clear();
-	if (fps.on)
-		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 10, 10));
-		
-	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
-	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 45, GAME_SCORE_TEXT_SIZE, 177, 250, 60));
+	messages_to_render.push_back(MessageToRender("Arcade", "Score", 20, 20));
+	messages_to_render.push_back(MessageToRender("Arcade", std::to_string(game_score), 20, 45));
 
 	messages_to_render.push_back(MessageToRender(
 		"Arcade", "Highscore", SCREEN_WIDTH - 20, 20, GAME_SCORE_TEXT_SIZE, 177, 250, 60, false));
 	messages_to_render.push_back(MessageToRender(
 		"Arcade", std::to_string(highscore), SCREEN_WIDTH - 20, 45, GAME_SCORE_TEXT_SIZE, 177, 250, 60, false));
+
+	if (fps.on)
+		messages_to_render.push_back(MessageToRender("Arcade", "FPS: " + std::to_string(int(1.f / dt)), 20, 70));
 
 	if (wait_for_restart) {
 		if (enemy_set.getNumberOfEnemies() == 0) {

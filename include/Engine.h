@@ -11,6 +11,7 @@
 extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 extern int game_score;
 extern bool game_over;
+extern int highscore;
 
 #ifndef VK_ESCAPE
 #  define VK_ESCAPE 0x1B
@@ -70,8 +71,8 @@ void schedule_quit_game();
 void log_error_and_exit(std::string message);
 
 struct MessageToRender {
-    MessageToRender(std::string font, std::string message, int x, int y, int size = 20,
-		uint8_t color_r = 0, uint8_t color_g = 255, uint8_t color_b = 0, bool left_alignment = true)
+    MessageToRender(std::string font, std::string message, int x, int y, int size = GAME_SCORE_TEXT_SIZE,
+		uint8_t color_r = 177, uint8_t color_g = 250, uint8_t color_b = 60, bool left_alignment = true)
         : font(font)
         , message(message)
         , x(x)
