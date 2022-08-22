@@ -15,6 +15,7 @@ class Enemy: public GameObject {
     public: 
         Enemy(const char* fname, float velocity = 200.f,  float angular_velocity = 0.f, int lives = 1, int score = 50);
         Enemy(const Enemy& enemy, float rotate_spawn_angle = 0.f);
+        virtual ~Enemy() {}
 
         float getRandom(float a, float b);        
         void checkBoundaries(Point& direction);
@@ -62,6 +63,7 @@ class EnemyTypeOne: public Enemy {
     public:
         EnemyTypeOne(const char* fname, float velocity = 200.f,  float angular_velocity = 3 * M_PI, float rotational_velocity = M_PI / 8);
         EnemyTypeOne(const EnemyTypeOne& enemy);
+        ~EnemyTypeOne() {}
 
         void updateScoreImage(float dt);
         void drawScore();
@@ -78,6 +80,7 @@ class EnemyTypeTwo: public Enemy {
     public:
         EnemyTypeTwo(const char* fname, float velocity = 250.f,  float angular_velocity = 0.f);
         EnemyTypeTwo(const EnemyTypeTwo& enemy);
+        ~EnemyTypeTwo() {}
 
         void shapeShift();
         void moveToPoint(const Point& point, float dt);
@@ -100,6 +103,7 @@ class EnemyTypeThree: public Enemy {
         EnemyTypeThree(const char* fname, float min_velocity = 300.f, float max_velocity = 450.f,
             float min_angular_velocity = M_PI, float max_angular_velocity = 4 * M_PI, float angle_threshold = M_PI / 6);
         EnemyTypeThree(const EnemyTypeThree& enemy);
+        ~EnemyTypeThree() {}
 
         void updateScoreImage(float dt);
         void drawScore();
